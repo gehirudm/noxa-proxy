@@ -1,13 +1,14 @@
+"use server"
+
 import { Sidebar } from "../components/sidebar"
 import { Header } from "../components/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
 import { MessageCircle, Mail } from "lucide-react"
+import { SupportTabs } from "@/components/support-tabs"
 
 export default function SupportPage() {
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex">
@@ -61,46 +62,7 @@ export default function SupportPage() {
               </Card>
             </div>
 
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-white">Submit a Ticket</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="subject" className="text-gray-300">
-                    Subject
-                  </Label>
-                  <Input
-                    id="subject"
-                    className="bg-gray-700 border-gray-600 text-white"
-                    placeholder="Enter ticket subject"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="priority" className="text-gray-300">
-                    Priority
-                  </Label>
-                  <select className="w-full bg-gray-700 border border-gray-600 text-white rounded-md px-3 py-2">
-                    <option>Low</option>
-                    <option>Medium</option>
-                    <option>High</option>
-                    <option>Critical</option>
-                  </select>
-                </div>
-                <div>
-                  <Label htmlFor="description" className="text-gray-300">
-                    Description
-                  </Label>
-                  <Textarea
-                    id="description"
-                    className="bg-gray-700 border-gray-600 text-white"
-                    placeholder="Describe your issue in detail"
-                    rows={6}
-                  />
-                </div>
-                <Button className="bg-pink-600 hover:bg-pink-700">Submit Ticket</Button>
-              </CardContent>
-            </Card>
+            <SupportTabs></SupportTabs>
           </main>
         </div>
       </div>

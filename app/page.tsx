@@ -55,7 +55,7 @@ export default function LandingPage() {
             <nav className="hidden md:flex items-center space-x-8">
               <div className="flex items-center space-x-1">
                 <Link
-                  href="#products"
+                  href="products"
                   className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
                 >
                   Products
@@ -64,7 +64,7 @@ export default function LandingPage() {
               </div>
               <div className="flex items-center space-x-1">
                 <Link
-                  href="#pricing"
+                  href="pricing"
                   className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
                 >
                   Pricing
@@ -72,19 +72,19 @@ export default function LandingPage() {
                 <ChevronDown className="h-4 w-4 text-slate-400" />
               </div>
               <Link
-                href="#location"
+                href="locations"
                 className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
               >
                 Location
               </Link>
               <Link
-                href="#use-case"
+                href="use-cases"
                 className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
               >
                 Use case
               </Link>
               <Link
-                href="#help"
+                href="help"
                 className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
               >
                 Help center

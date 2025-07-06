@@ -27,19 +27,19 @@ export function Sidebar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true)
 
   const menuItems = [
-    { icon: LayoutDashboard, label: "Dashboard", href: "/", active: pathname === "/" },
-    { icon: CreditCard, label: "Billing", href: "/billing", active: pathname === "/billing" },
-    { icon: Users, label: "Referral", href: "/referral", active: pathname === "/referral" },
-    { icon: HelpCircle, label: "Support", href: "/support", active: pathname === "/support" },
-    { icon: Settings, label: "Settings", href: "/settings", active: pathname === "/settings" },
+    { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard/", active: pathname === "/" },
+    { icon: CreditCard, label: "Billing", href: "/dashboard/billing", active: pathname === "/billing" },
+    { icon: Users, label: "Referral", href: "/dashboard/referral", active: pathname === "/referral" },
+    { icon: HelpCircle, label: "Support", href: "/dashboard/support", active: pathname === "/support" },
+    { icon: Settings, label: "Settings", href: "/dashboard/settings", active: pathname === "/settings" },
   ]
 
   const proxyItems = [
-    { icon: Shield, label: "Premium Residential", href: "/proxies/premium-residential" },
-    { icon: Wifi, label: "Static Residential", href: "/proxies/static-residential" },
-    { icon: Smartphone, label: "Mobile Proxy", href: "/proxies/mobile-proxy" },
-    { icon: Server, label: "Datacenter IPv4", href: "/proxies/datacenter-ipv4" },
-    { icon: Network, label: "Datacenter IPv6", href: "/proxies/datacenter-ipv6" },
+    { icon: Shield, label: "Premium Residential", href: "/dashboard/proxies/premium-residential" },
+    { icon: Wifi, label: "Static Residential", href: "/dashboard/proxies/static-residential" },
+    { icon: Smartphone, label: "Mobile Proxy", href: "/dashboard/proxies/mobile-proxy" },
+    { icon: Server, label: "Datacenter IPv4", href: "/dashboard/proxies/datacenter-ipv4" },
+    { icon: Network, label: "Datacenter IPv6", href: "/dashboard/proxies/datacenter-ipv6" },
   ]
 
   return (

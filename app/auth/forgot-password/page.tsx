@@ -5,7 +5,10 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Zap, ArrowLeft, Mail } from "lucide-react"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { ArrowLeft, Zap, Mail } from "lucide-react"
+import Link from "next/link"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -13,106 +16,106 @@ export default function ForgotPasswordPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    // Handle forgot password logic here
     console.log("Password reset request for:", email)
-    // In real app, this would send reset email
     setIsSubmitted(true)
   }
 
-  const handleBackToLogin = () => {
-    window.location.href = "/auth"
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 flex flex-col">
-      {/* Header */}
-      <div className="flex justify-center pt-12 pb-8">
-        <div className="flex items-center space-x-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-red-500 to-red-600 shadow-lg">
-            <Zap className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-2xl font-bold text-white">IgnitexProxy</span>
-        </div>
-      </div>
-
-      {/* Forgot Password Form */}
-      <div className="flex-1 flex items-start justify-center px-4">
-        <div className="w-full max-w-sm space-y-6">
-          {/* Back to Login */}
-          <button
-            onClick={handleBackToLogin}
-            className="flex items-center text-blue-200 hover:text-white text-sm mb-4 transition-colors duration-200"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Login
-          </button>
-
-          {isSubmitted ? (
-            <div className="text-center space-y-6">
-              <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto backdrop-blur-sm border border-green-500/30">
-                <Mail className="h-8 w-8 text-green-400" />
-              </div>
-              <h1 className="text-2xl font-medium text-white">Check Your Email</h1>
-              <p className="text-blue-200">
-                We've sent a password reset link to <span className="text-white font-medium">{email}</span>
-              </p>
-              <Button
-                onClick={handleBackToLogin}
-                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
-              >
-                Back to Login
-              </Button>
-              <Button
-                onClick={() => setIsSubmitted(false)}
-                variant="outline"
-                className="w-full border-blue-500/50 text-blue-200 hover:bg-blue-500/10 hover:text-white hover:border-blue-400 font-medium py-3 rounded-lg backdrop-blur-sm transition-all duration-200"
-              >
-                Try Different Email
-              </Button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center space-x-2 mb-4">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-r from-red-500 to-yellow-500">
+              <Zap className="h-6 w-6 text-white" />
             </div>
-          ) : (
-            <>
-              <h1 className="text-2xl font-medium text-white text-center mb-8">Forgot Password</h1>
-              <p className="text-blue-200 text-center mb-8">
-                Enter your email address and we'll send you a link to reset your password.
-              </p>
+            <span className="text-2xl font-bold text-white">IgnitexProxy</span>
+          </div>
+        </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                {/* Email Field */}
+        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-white">
+              {isSubmitted ? "Check Your Email" : "Forgot Password"}
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              {isSubmitted
+                ? "We've sent a password reset link to your email address"
+                : "Enter your email address and we'll send you a link to reset your password"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {isSubmitted ? (
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                  <Mail className="h-8 w-8 text-green-600" />
+                </div>
+                <p className="text-gray-300">
+                  If an account with email <strong className="text-white">{email}</strong> exists, you will receive a
+                  password reset link shortly.
+                </p>
+                <div className="space-y-3">
+                  <Button className="w-full bg-white hover:bg-gray-100 text-gray-900 font-semibold" asChild>
+                    <Link href="/login">Back to Login</Link>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full border-slate-600 text-gray-300 hover:bg-slate-700"
+                    onClick={() => setIsSubmitted(false)}
+                  >
+                    Try Different Email
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
-                  <label htmlFor="email" className="block text-sm text-blue-200">
+                  <Label htmlFor="email" className="text-gray-300">
                     Email Address
-                  </label>
+                  </Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="Enter your email address"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-slate-800/50 border-blue-700/50 text-white placeholder:text-blue-300/70 focus:border-blue-500 focus:ring-blue-500/20 rounded-lg py-3 backdrop-blur-sm"
+                    className="bg-slate-700 border-slate-600 text-white placeholder:text-gray-400 focus:border-blue-500"
                     required
                   />
                 </div>
 
-                {/* Send Reset Link Button */}
-                <Button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  Send Reset Link
-                </Button>
-
-                {/* Back to Login Button */}
-                <Button
-                  type="button"
-                  onClick={handleBackToLogin}
-                  variant="outline"
-                  className="w-full border-blue-500/50 text-blue-200 hover:bg-blue-500/10 hover:text-white hover:border-blue-400 font-medium py-3 rounded-lg backdrop-blur-sm transition-all duration-200"
-                >
-                  Back to Login
-                </Button>
+                <div className="space-y-3">
+                  <Button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-red-500 to-yellow-500 hover:from-red-600 hover:to-yellow-600 text-white font-semibold"
+                  >
+                    Send Reset Link
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full border-slate-600 text-gray-300 hover:bg-slate-700"
+                    asChild
+                  >
+                    <Link href="/auth">
+                      <ArrowLeft className="h-4 w-4 mr-2" />
+                      Back to Login
+                    </Link>
+                  </Button>
+                </div>
               </form>
-            </>
-          )}
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="text-center mt-6">
+          <p className="text-gray-400 text-sm">
+            Remember your password?{" "}
+            <Link href="/login" className="text-blue-400 hover:text-blue-300">
+              Sign in here
+            </Link>
+          </p>
         </div>
       </div>
     </div>

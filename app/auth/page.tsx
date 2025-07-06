@@ -8,27 +8,59 @@ import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Zap } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { useAuth } from "@/contexts/auth-context"
+import { useRouter } from "next/navigation"
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"
+import { auth } from "@/lib/firebase"
 
 export default function AuthPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isHuman, setIsHuman] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  
+  const { signIn } = useAuth()
+  const router = useRouter()
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+    
     if (!isHuman) {
-      alert("Please verify that you are human")
+      setError("Please verify that you are human")
       return
     }
-    window.location.href = "/dashboard"
+    
+    try {
+      setLoading(true)
+      setError(null)
+      await signIn(email, password)
+      router.push("/dashboard")
+    } catch (err) {
+      console.error("Login error:", err)
+      setError("Invalid email or password. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const handleGoogleLogin = () => {
-    console.log("Google login attempt")
+  const handleGoogleLogin = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const provider = new GoogleAuthProvider()
+      await signInWithPopup(auth, provider)
+      router.push("/dashboard")
+    } catch (err) {
+      console.error("Google login error:", err)
+      setError("Failed to login with Google. Please try again.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleCreateAccount = () => {
-    window.location.href = "/auth/register"
+    router.push("/auth/register")
   }
 
   return (
@@ -56,12 +88,19 @@ export default function AuthPage() {
           {/* Login Title */}
           <h1 className="text-3xl font-bold text-foreground text-center">Login</h1>
 
+          {error && (
+            <div className="p-3 bg-red-500/10 border border-red-500/50 rounded-lg text-red-600 text-sm">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleLogin} className="space-y-6">
             {/* Google Login Button */}
             <Button
               type="button"
               onClick={handleGoogleLogin}
               className="w-full glass-effect hover:bg-white/20 dark:hover:bg-white/10 text-foreground font-medium py-6 rounded-xl border-0 shadow-lg hover:shadow-xl transition-all duration-300"
+              disabled={loading}
             >
               <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24">
                 <path
@@ -81,7 +120,7 @@ export default function AuthPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              Login with Google
+              {loading ? "Logging in..." : "Login with Google"}
             </Button>
 
             {/* OR Divider */}
@@ -107,6 +146,7 @@ export default function AuthPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full glass-effect border-border text-foreground placeholder:text-muted-foreground focus:border-red-500 focus:ring-red-500/20 rounded-xl py-6 text-base"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -123,6 +163,7 @@ export default function AuthPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full glass-effect border-border text-foreground placeholder:text-muted-foreground focus:border-red-500 focus:ring-red-500/20 rounded-xl py-6 text-base"
                 required
+                disabled={loading}
               />
             </div>
 
@@ -130,8 +171,9 @@ export default function AuthPage() {
             <div className="text-left">
               <button
                 type="button"
-                onClick={() => (window.location.href = "/auth/forgot-password")}
+                onClick={() => router.push("/auth/forgot-password")}
                 className="text-sm text-amber-500 hover:text-amber-400 underline transition-colors duration-200 font-medium"
+                disabled={loading}
               >
                 Forgot password?
               </button>
@@ -144,6 +186,7 @@ export default function AuthPage() {
                 checked={isHuman}
                 onCheckedChange={(checked) => setIsHuman(checked as boolean)}
                 className="border-border data-[state=checked]:bg-emerald-500 data-[state=checked]:border-emerald-500 h-5 w-5"
+                disabled={loading}
               />
               <label htmlFor="captcha" className="text-sm text-foreground flex-1 font-medium">
                 I am human
@@ -160,9 +203,9 @@ export default function AuthPage() {
             <Button
               type="submit"
               className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 text-base"
-              disabled={!isHuman}
+              disabled={!isHuman || loading}
             >
-              Login
+              {loading ? "Logging in..." : "Login"}
             </Button>
 
             {/* Create Account Button */}
@@ -171,6 +214,7 @@ export default function AuthPage() {
               onClick={handleCreateAccount}
               variant="outline"
               className="w-full border-border text-foreground hover:bg-muted font-semibold py-6 rounded-xl transition-all duration-300 text-base"
+              disabled={loading}
             >
               Create account
             </Button>
