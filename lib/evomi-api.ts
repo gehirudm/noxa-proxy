@@ -136,6 +136,77 @@ export class EvomiAPI {
     return apiResponse.data
   }
 
+  async giveBalance(
+    username: string,
+    product: 'residential' | 'sharedDataCenter' | 'mobile',
+    mbAmount: number,
+  ): Promise<SubUser> {
+    const pathMap = {
+      residential: 'give_rp_balance',
+      sharedDataCenter: 'give_sdc_balance',
+      mobile: 'give_mobile_balance',
+    }
+    const endpoint = pathMap[product]
+    const resp = await fetch(`${EVOMI_API_BASE}/reseller/sub_users/${endpoint}`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ username, balance: mbAmount }),
+    })
+    if (!resp.ok) throw new Error(`Failed to add ${product} balance: ${resp.statusText}`)
+    const apiRes: ApiResponse<SubUser> = await resp.json()
+    return apiRes.data
+  }
+
+  /** Deduct MB balance from a subuser for specific product type */
+  async takeBalance(
+    username: string,
+    product: 'residential' | 'sharedDataCenter' | 'mobile',
+    mbAmount: number,
+  ): Promise<SubUser> {
+    const pathMap = {
+      residential: 'take_rp_balance',
+      sharedDataCenter: 'take_sdc_balance',
+      mobile: 'take_mobile_balance',
+    }
+    const endpoint = pathMap[product]
+    const resp = await fetch(`${EVOMI_API_BASE}/reseller/sub_users/${endpoint}`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ username, balance: mbAmount }),
+    })
+    if (!resp.ok) throw new Error(`Failed to remove ${product} balance: ${resp.statusText}`)
+    const apiRes: ApiResponse<SubUser> = await resp.json()
+    return apiRes.data
+  }
+
+  /** Reset a subuser's proxy key (auth key) */
+  async resetProxyKey(
+    username: string,
+    product: 'residential' | 'sharedDataCenter' | 'dataCenter' | 'dataCenterIPV6' | 'mobile',
+  ): Promise<SubUser> {
+    const endpointMap: Record<string, string> = {
+      residential: 'reset_rp_auth_key',
+      sharedDataCenter: 'reset_sdc_auth_key',
+      mobile: 'reset_mp_auth_key',
+    }
+
+    const endpoint = endpointMap[product]
+    if (!endpoint) throw new Error(`Unsupported product type: ${product}`)
+
+    const resp = await fetch(`${EVOMI_API_BASE}/reseller/sub_users/${endpoint}`, {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ username }),
+    })
+
+    if (!resp.ok) {
+      throw new Error(`Failed to reset ${product} proxy key: ${resp.statusText}`)
+    }
+
+    const apiRes: ApiResponse<SubUser> = await resp.json()
+    return apiRes.data
+  }
+
   async checkStatus(): Promise<{ status: string; message: string }> {
     try {
       // Since there's no specific status endpoint in the docs, we'll use the view_all endpoint as a health check

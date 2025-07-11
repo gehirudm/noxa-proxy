@@ -14,12 +14,13 @@ import {
   getIdToken,
 } from "firebase/auth"
 import { auth } from "@/lib/firebase"
-import { doc, setDoc, getFirestore } from "firebase/firestore"
+import { doc, setDoc, getDoc, getFirestore } from "firebase/firestore"
 import { createEvomiSubUser } from "@/app/actions/user-actions"
 
 interface AuthContextType {
   user: User | null
   loading: boolean
+  evomiUsername: string | null
   signIn: (email: string, password: string) => Promise<UserCredential>
   signUp: (username: string, email: string, password: string) => Promise<UserCredential>
   logout: () => Promise<void>
@@ -31,6 +32,7 @@ const db = getFirestore();
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [evomiUsername, setEvomiUsername] = useState<string | null>(null)
 
   // Function to create a session cookie on the server
   const createSession = async (user: User) => {
@@ -53,6 +55,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Function to fetch Evomi username from Firestore
+  const fetchEvomiUsername = async (userId: string) => {
+    try {
+      const userDoc = await getDoc(doc(db, "users", userId))
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        if (userData.evomi && userData.evomi.username) {
+          setEvomiUsername(userData.evomi.username)
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching Evomi username:", error)
+    }
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
@@ -60,6 +77,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         // Create a session when user logs in
         await createSession(user)
+        // Fetch Evomi username
+        await fetchEvomiUsername(user.uid)
+      } else {
+        // Clear Evomi username when user logs out
+        setEvomiUsername(null)
       }
 
       setLoading(false)
@@ -71,6 +93,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signIn = async (email: string, password: string) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, password)
     await createSession(userCredential.user)
+    await fetchEvomiUsername(userCredential.user.uid)
     return userCredential
   }
 
@@ -112,6 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       })
 
+      // Set the Evomi username in state
+      setEvomiUsername(subUser.username)
+
       // Create a session
       await createSession(user)
 
@@ -128,10 +154,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       method: 'DELETE',
     })
     
+    // Clear Evomi username
+    setEvomiUsername(null)
+    
     await signOut(auth)
   }
 
-  return <AuthContext.Provider value={{ user, loading, signIn, signUp, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, loading, evomiUsername, signIn, signUp, logout }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() {

@@ -8,8 +8,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "NoxaProxy Dashboard",
-  description: "Professional proxy service dashboard",
-    generator: 'v0.dev'
+  description: "Welcome to NoxaProxy Dashboard",
 }
 
 export default function RootLayout({

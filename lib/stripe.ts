@@ -1,87 +1,7 @@
 import Stripe from "stripe"
+import { PROXY_PLANS, type ProxyPlan } from "./proxy-plans"
 
-export interface ProxyPlan {
-  name: string
-  price: number // in cents
-  bandwidth: string
-  priceId: string
-  isRecurring: boolean
-}
-
-export const PROXY_PLANS: Record<
-  string,
-  Record<"basic" | "pro" | "enterprise", ProxyPlan>
-> = {
-  residential: {
-    basic: {
-      name: "Residential Basic",
-      price: 2999,
-      bandwidth: "10GB",
-      priceId: process.env.STRIPE_RESIDENTIAL_BASIC!,
-      isRecurring: true,
-    },
-    pro: {
-      name: "Residential Pro",
-      price: 4999,
-      bandwidth: "25GB",
-      priceId: process.env.STRIPE_RESIDENTIAL_PRO!,
-      isRecurring: true,
-    },
-    enterprise: {
-      name: "Residential Enterprise",
-      price: 9999,
-      bandwidth: "100GB",
-      priceId: process.env.STRIPE_RESIDENTIAL_ENTERPRISE!,
-      isRecurring: true,
-    },
-  },
-  mobile: {
-    basic: {
-      name: "Mobile Basic",
-      price: 3999,
-      bandwidth: "5GB",
-      priceId: process.env.STRIPE_MOBILE_BASIC!,
-      isRecurring: true,
-    },
-    pro: {
-      name: "Mobile Pro",
-      price: 7999,
-      bandwidth: "20GB",
-      priceId: process.env.STRIPE_MOBILE_PRO!,
-      isRecurring: true,
-    },
-    enterprise: {
-      name: "Mobile Enterprise",
-      price: 14999,
-      bandwidth: "60GB",
-      priceId: process.env.STRIPE_MOBILE_ENTERPRISE!,
-      isRecurring: true,
-    },
-  },
-  datacenter: {
-    basic: {
-      name: "Datacenter One-Time 10GB",
-      price: 1999,
-      bandwidth: "10GB",
-      priceId: process.env.STRIPE_DATACENTER_BASIC!,
-      isRecurring: false,
-    },
-    pro: {
-      name: "Datacenter One-Time 25GB",
-      price: 3999,
-      bandwidth: "25GB",
-      priceId: process.env.STRIPE_DATACENTER_PRO!,
-      isRecurring: false,
-    },
-    enterprise: {
-      name: "Datacenter One-Time 100GB",
-      price: 7999,
-      bandwidth: "100GB",
-      priceId: process.env.STRIPE_DATACENTER_ENTERPRISE!,
-      isRecurring: false,
-    },
-  },
-}
+export { PROXY_PLANS, type ProxyPlan }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2025-06-30.basil",
@@ -152,7 +72,7 @@ export async function handleProxyPlanPurchase({
   cancelUrl,
 }: {
   email: string
-  proxyType: keyof typeof PROXY_PLANS // 'residential' | 'mobile' | 'datacenter'
+  proxyType: keyof typeof PROXY_PLANS // 'residential' | 'mobile' | 'datacenter' | 'static_residential'
   tier: "basic" | "pro" | "enterprise"
   successUrl: string
   cancelUrl: string
@@ -177,4 +97,3 @@ export async function handleProxyPlanPurchase({
         cancelUrl,
       })
 }
-
