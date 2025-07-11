@@ -762,7 +762,7 @@ export async function handlePaymentCancellation({
 /**
  * Redirects to payment page based on the response from handleProxyPlanPurchase or handleWalletDeposit
  */
-export function redirectToPayment(paymentResponse: PaymentResponse): void {
+export async function redirectToPayment(paymentResponse: PaymentResponse) {
     if (paymentResponse.success && paymentResponse.redirectUrl) {
         redirect(paymentResponse.redirectUrl)
     } else {

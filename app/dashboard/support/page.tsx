@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { MessageCircle, Mail } from "lucide-react"
 import { SupportTabs } from "@/components/support-tabs"
 
-export default function SupportPage() {
+export default async function SupportPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
