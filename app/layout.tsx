@@ -10,8 +10,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "IgnitexProxy - Premium Proxy Services",
-  description: "Professional proxy solutions for modern businesses",
-  generator: 'v0.dev'
+  description: "Professional proxy solutions for modern businesses"
 }
 
 export default function RootLayout({
@@ -23,10 +22,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-          <AuthProvider>
             {children}
             <Toaster />
-          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

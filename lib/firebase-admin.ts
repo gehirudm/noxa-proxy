@@ -13,7 +13,7 @@ const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY!);
 if (!apps.length) {
   initializeApp({
     credential: cert(serviceAccount),
-    databaseURL: `https://${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebasestorage.app`,
+    // databaseURL: `https://${process.env.FIREBASE_ADMIN_PROJECT_ID}.firebasestorage.app`,
   });
 }
 
