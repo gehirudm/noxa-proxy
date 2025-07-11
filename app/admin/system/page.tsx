@@ -55,7 +55,7 @@ export default function AdminOverview() {
                         </Label>
                         <Textarea
                             id="welcome-email"
-                            defaultValue="Welcome to IgnitexProxy! Your account has been created successfully."
+                            defaultValue="Welcome to NoxaProxy! Your account has been created successfully."
                             className="bg-slate-700 border-slate-600 text-white"
                         />
                     </div>

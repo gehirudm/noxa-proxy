@@ -9,7 +9,7 @@ import { Toaster } from "@/components/ui/toaster"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "IgnitexProxy - Premium Proxy Services",
+  title: "NoxaProxy - Premium Proxy Services",
   description: "Professional proxy solutions for modern businesses"
 }
 

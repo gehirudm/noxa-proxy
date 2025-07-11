@@ -12,9 +12,28 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useTheme } from "./theme-provider"
 import Link from "next/link"
+import { useAuth } from "@/contexts/auth-context"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 
 export function Header() {
   const { theme, setTheme } = useTheme()
+  const { user, logout } = useAuth()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      await logout()
+      // Redirect to login page after successful logout
+      router.push("/auth")
+    } catch (error) {
+      console.error("Logout failed:", error)
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
 
   return (
     <header className="bg-background border-b border-border px-6 py-4">
@@ -57,8 +76,12 @@ export function Header() {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
-                  <p className="text-sm font-medium leading-none">John Doe</p>
-                  <p className="text-xs leading-none text-muted-foreground">john.doe@example.com</p>
+                  <p className="text-sm font-medium leading-none">
+                    {user?.displayName || "User"}
+                  </p>
+                  <p className="text-xs leading-none text-muted-foreground">
+                    {user?.email || "user@example.com"}
+                  </p>
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -75,9 +98,13 @@ export function Header() {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 focus:text-red-600">
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Log out</span>
+                <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

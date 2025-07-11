@@ -93,15 +93,25 @@ export default function LandingPage() {
 
             <div className="flex items-center space-x-4">
               <ThemeToggle />
-              <Button
-                variant="ghost"
-                className="hidden md:inline-flex text-slate-600 hover:text-cyan-600 hover:bg-cyan-500/10 dark:text-slate-300 dark:hover:text-cyan-400 dark:hover:bg-cyan-500/10"
+              <Link
+                href="auth"
+                className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
               >
-                Login
-              </Button>
-              <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300">
-                Create account
-              </Button>
+                <Button
+                  variant="ghost"
+                  className="hidden md:inline-flex text-slate-600 hover:text-cyan-600 hover:bg-cyan-500/10 dark:text-slate-300 dark:hover:text-cyan-400 dark:hover:bg-cyan-500/10"
+                >
+                  Login
+                </Button>
+              </Link>
+              <Link
+                href="auth/register"
+                className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
+              >
+                <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300">
+                  Create account
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

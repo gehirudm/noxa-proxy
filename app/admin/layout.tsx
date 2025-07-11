@@ -36,7 +36,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-600">
                   <Shield className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold text-white">IgnitexProxy Admin</span>
+                <span className="text-xl font-bold text-white">NoxaProxy Admin</span>
               </div>
               <div className="flex items-center space-x-4">
                 <Badge variant="secondary" className="bg-red-100 text-red-800">
