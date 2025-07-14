@@ -18,22 +18,7 @@ import { useRouter } from "next/navigation"
 
 export function Header() {
   const { theme, setTheme } = useTheme()
-  const { user, logout } = useAuth()
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-  const router = useRouter()
-
-  const handleLogout = async () => {
-    try {
-      setIsLoggingOut(true)
-      await logout()
-      // Redirect to login page after successful logout
-      router.push("/auth")
-    } catch (error) {
-      console.error("Logout failed:", error)
-    } finally {
-      setIsLoggingOut(false)
-    }
-  }
+  const { user } = useAuth()
 
   return (
     <header className="bg-background border-b border-border px-6 py-4">
@@ -100,11 +85,9 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>{isLoggingOut ? "Logging out..." : "Log out"}</span>
+                <span>Log out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
