@@ -18,23 +18,98 @@ import {
   Server,
   Shield,
   Target,
-  Youtube,
-  ShoppingCart,
-  Twitter,
-  Gamepad2,
-  Plane,
-  Music,
-  Instagram,
-  Facebook,
-  Apple,
-  Package,
-  Linkedin,
-  Search,
 } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LiveStats } from "@/components/live-stats"
+import React from "react"
+
+// Define a type for company data
+interface Company {
+  name: string;
+  domain: string;
+}
+
+// Create a 2D array of companies (8 rows x 4 columns)
+const companiesGrid: Company[][] = [
+  // Row 1
+  [
+    { name: "YouTube", domain: "youtube.com" },
+    { name: "Walmart", domain: "walmart.com" },
+    { name: "Twitter", domain: "twitter.com" },
+    { name: "Twitch", domain: "twitch.tv" },
+  ],
+  // Row 2
+  [
+    { name: "Telegram", domain: "telegram.org" },
+    { name: "Spotify", domain: "spotify.com" },
+    { name: "Shopify", domain: "shopify.com" },
+    { name: "Reddit", domain: "reddit.com" },
+  ],
+  // Row 3
+  [
+    { name: "reCAPTCHA", domain: "recaptcha.com" },
+    { name: "Instagram", domain: "instagram.com" },
+    { name: "Facebook", domain: "facebook.com" },
+    { name: "Pokemon", domain: "pokemon.com" },
+  ],
+  // Row 4
+  [
+    { name: "Peace", domain: "peaceoneday.org" },
+    { name: "eBay", domain: "ebay.com" },
+    { name: "Kijiji", domain: "kijiji.ca" },
+    { name: "Target", domain: "target.com" },
+  ],
+  // Row 5
+  [
+    { name: "Apple", domain: "apple.com" },
+    { name: "Amazon", domain: "amazon.com" },
+    { name: "TikTok", domain: "tiktok.com" },
+    { name: "LinkedIn", domain: "linkedin.com" },
+  ],
+  // Row 6
+  [
+    { name: "OnlyFans", domain: "onlyfans.com" },
+    { name: "Multilogin", domain: "multilogin.com" },
+    { name: "Incogniton", domain: "incogniton.com" },
+    { name: "Kameleo", domain: "kameleo.io" },
+  ],
+  // Row 7
+  [
+    { name: "Linken Sphere", domain: "linkensphere.com" },
+    { name: "Selenium", domain: "selenium.dev" },
+    { name: "Puppeteer", domain: "pptr.dev" },
+    { name: "Playwright", domain: "playwright.dev" },
+  ],
+  // Row 8
+  [
+    { name: "Google", domain: "google.com" },
+    { name: "GoLogin", domain: "gologin.com" },
+    { name: "Dolphin Anty", domain: "dolphin-anty.com" },
+    { name: "Ads Power", domain: "adspower.com" },
+  ],
+];
+
+// Component for rendering a single company card
+const CompanyCard = ({ company }: { company: Company }) => {
+  const logoSrc = `/sites/${company.domain}.png`;
+
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
+      <div className="h-8 w-8 mb-2 relative">
+        <Image
+          src={logoSrc}
+          alt={company.name}
+          width={32}
+          height={32}
+          className="object-contain"
+        />
+      </div>
+      <span className="text-xs font-bold text-slate-700 dark:text-white">{company.name}</span>
+    </div>
+  );
+};
 
 export default function LandingPage() {
   return (
@@ -43,33 +118,33 @@ export default function LandingPage() {
       <header className="w-full glass-effect border-b border-cyan-500/20 backdrop-blur-xl bg-white/80 dark:bg-slate-900/80">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex h-16 items-center justify-between px-4 md:px-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 via-blue-500 to-teal-500 shadow-lg shadow-cyan-500/25">
-                <Zap className="h-5 w-5 text-white" />
+            <Link href={"/"}>
+              <div className="flex items-center space-x-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-cyan-500 via-blue-500 to-teal-500 shadow-lg shadow-cyan-500/25">
+                  <Zap className="h-5 w-5 text-white" />
+                </div>
+                <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 bg-clip-text text-transparent">
+                  NoxaProxy
+                </span>
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-400 bg-clip-text text-transparent">
-                NoxaProxy
-              </span>
-            </div>
+            </Link>
 
             <nav className="hidden md:flex items-center space-x-8">
               <div className="flex items-center space-x-1">
                 <Link
-                  href="products"
+                  href="#products"
                   className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
                 >
                   Products
                 </Link>
-                <ChevronDown className="h-4 w-4 text-slate-400" />
               </div>
               <div className="flex items-center space-x-1">
                 <Link
-                  href="pricing"
+                  href="#products"
                   className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
                 >
                   Pricing
                 </Link>
-                <ChevronDown className="h-4 w-4 text-slate-400" />
               </div>
               <Link
                 href="locations"
@@ -105,7 +180,7 @@ export default function LandingPage() {
                 </Button>
               </Link>
               <Link
-                href="auth/register"
+                href="auth?mode=register"
                 className="text-sm font-medium text-slate-600 hover:text-cyan-600 dark:text-slate-300 dark:hover:text-cyan-400 transition-colors"
               >
                 <Button className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white font-semibold shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300">
@@ -260,7 +335,7 @@ export default function LandingPage() {
                     <div className="flex items-center space-x-4">
                       <div className="text-right">
                         <span className="text-sm text-slate-500 dark:text-slate-400">from </span>
-                        <span className="text-2xl font-bold text-slate-900 dark:text-white">$1</span>
+                        <span className="text-2xl font-bold text-slate-900 dark:text-white">$2.75</span>
                         <span className="text-slate-500 dark:text-slate-400">/GB</span>
                       </div>
                       <Button
@@ -290,16 +365,16 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
-                      <div className="text-right">
+                      {/* <div className="text-right">
                         <span className="text-sm text-slate-500 dark:text-slate-400">from </span>
                         <span className="text-2xl font-bold text-slate-900 dark:text-white">$1</span>
                         <span className="text-slate-500 dark:text-slate-400">/GB</span>
-                      </div>
+                      </div> */}
                       <Button
                         size="sm"
                         className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300"
                       >
-                        Buy Now
+                        Soon
                       </Button>
                     </div>
                   </div>
@@ -322,16 +397,16 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
-                      <div className="text-right">
+                      {/* <div className="text-right">
                         <span className="text-sm text-slate-500 dark:text-slate-400">from </span>
                         <span className="text-2xl font-bold text-slate-900 dark:text-white">$1</span>
                         <span className="text-slate-500 dark:text-slate-400">/GB</span>
-                      </div>
+                      </div> */}
                       <Button
                         size="sm"
                         className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300"
                       >
-                        Buy Now
+                        Soon
                       </Button>
                     </div>
                   </div>
@@ -354,16 +429,16 @@ export default function LandingPage() {
                       </div>
                     </div>
                     <div className="flex items-center space-x-4">
-                      <div className="text-right">
+                      {/* <div className="text-right">
                         <span className="text-sm text-slate-500 dark:text-slate-400">from </span>
                         <span className="text-2xl font-bold text-slate-900 dark:text-white">$1</span>
                         <span className="text-slate-500 dark:text-slate-400">/IP</span>
-                      </div>
+                      </div> */}
                       <Button
                         size="sm"
                         className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300"
                       >
-                        Buy Now
+                        Soon
                       </Button>
                     </div>
                   </div>
@@ -401,177 +476,14 @@ export default function LandingPage() {
               </div>
 
               <div className="grid grid-cols-4 gap-4">
-                {/* Row 1 */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Youtube className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">YouTube</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <ShoppingCart className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Walmart</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Twitter className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Twitter</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Gamepad2 className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Twitch</span>
-                </div>
-
-                {/* Row 2 */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Plane className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Telegram</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Music className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Spotify</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <ShoppingCart className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Shopify</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded-full mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">R</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Reddit</span>
-                </div>
-
-                {/* Row 3 */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Shield className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">reCAPTCHA</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Instagram className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Instagram</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Facebook className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Facebook</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">P</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Pokemon</span>
-                </div>
-
-                {/* Row 4 */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded-full mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">P</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Peace</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <ShoppingCart className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">eBay</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Home className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Kijiji</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Target className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Target</span>
-                </div>
-
-                {/* Row 5 */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Apple className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Apple</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Package className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Amazon</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Music className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">TikTok</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Linkedin className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">LinkedIn</span>
-                </div>
-
-                {/* Row 6 */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">OF</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">OnlyFans</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">M</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Multilogin</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">I</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Incogniton</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">K</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Kameleo</span>
-                </div>
-
-                {/* Row 7 */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">LS</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Linken Sphere</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">S</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Selenium</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">P</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Puppeteer</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">PW</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Playwright</span>
-                </div>
-
-                {/* Row 8 */}
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <Search className="h-8 w-8 text-slate-700 dark:text-white mb-2" />
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Google</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">G</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">GoLogin</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">D</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Dolphin Anty</span>
-                </div>
-                <div className="bg-white dark:bg-slate-800 rounded-xl p-4 flex flex-col items-center justify-center hover:scale-110 transition-transform border border-slate-200 dark:border-slate-700 hover:border-green-400/50 hover:shadow-lg hover:shadow-green-400/20 backdrop-blur-xl">
-                  <div className="h-8 w-8 bg-slate-700 dark:bg-white rounded mb-2 flex items-center justify-center">
-                    <span className="text-white dark:text-slate-800 text-xs font-bold">A</span>
-                  </div>
-                  <span className="text-xs font-bold text-slate-700 dark:text-white">Ads Power</span>
-                </div>
+                {companiesGrid.map((row, rowIndex) => (
+                  // We use the row index as the key for the fragment
+                  <React.Fragment key={`row-${rowIndex}`}>
+                    {row.map((company) => (
+                      <CompanyCard key={company.name} company={company} />
+                    ))}
+                  </React.Fragment>
+                ))}
               </div>
 
               <div className="text-center mt-8">
@@ -1051,18 +963,26 @@ export default function LandingPage() {
           <div className="text-center">
             <p className="text-slate-600 dark:text-slate-300 mb-8 text-lg">Still don't have an account?</p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
-              <Button
-                variant="outline"
-                className="border-green-400/50 text-green-500 hover:text-white hover:bg-green-500/20 transition-colors text-lg px-8 py-4 rounded-xl"
+              <Link
+                href={"/auth"}
               >
-                Login
-              </Button>
-              <Button
-                variant="outline"
-                className="border-green-400/50 text-green-500 hover:text-white hover:bg-green-500/20 transition-colors text-lg px-8 py-4 rounded-xl"
+                <Button
+                  variant="outline"
+                  className="border-green-400/50 text-green-500 hover:text-white hover:bg-green-500/20 transition-colors text-lg px-8 py-4 rounded-xl"
+                >
+                  Login
+                </Button>
+              </Link>
+              <Link
+                href={"/auth?mode=register"}
               >
-                Register
-              </Button>
+                <Button
+                  variant="outline"
+                  className="border-green-400/50 text-green-500 hover:text-white hover:bg-green-500/20 transition-colors text-lg px-8 py-4 rounded-xl"
+                >
+                  Register
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
@@ -1119,22 +1039,22 @@ export default function LandingPage() {
               <h3 className="font-semibold mb-4 text-cyan-500">Products</h3>
               <ul className="space-y-2 text-slate-600 dark:text-slate-400">
                 <li>
-                  <Link href="#" className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">
+                  <Link href="/#products" className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">
                     Premium Residential
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-teal-500 dark:hover:text-teal-400 transition-colors">
+                  <Link href="/#products" className="hover:text-teal-500 dark:hover:text-teal-400 transition-colors">
                     Static Residential
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
+                  <Link href="/#products" className="hover:text-blue-500 dark:hover:text-blue-400 transition-colors">
                     Mobile Proxy
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">
+                  <Link href="/#products" className="hover:text-cyan-500 dark:hover:text-cyan-400 transition-colors">
                     Datacenter Proxy
                   </Link>
                 </li>
@@ -1222,7 +1142,7 @@ export default function LandingPage() {
               <h3 className="font-semibold mb-4 text-green-500">Support</h3>
               <ul className="space-y-2 text-slate-600 dark:text-slate-400">
                 <li>
-                  <Link href="#" className="hover:text-green-500 dark:hover:text-green-400 transition-colors">
+                  <Link href="/help" className="hover:text-green-500 dark:hover:text-green-400 transition-colors">
                     Help Center
                   </Link>
                 </li>
@@ -1232,7 +1152,7 @@ export default function LandingPage() {
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-teal-500 dark:hover:text-teal-400 transition-colors">
+                  <Link href="https://t.me/datasnow" className="hover:text-teal-500 dark:hover:text-teal-400 transition-colors">
                     Telegram Chat
                   </Link>
                 </li>

@@ -178,7 +178,7 @@ export default function HelpCenter() {
   return (
     <>
       {/* Hero Section */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 flex justify-center">
         <div className="container px-4 md:px-6">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-foreground">
@@ -228,7 +228,7 @@ export default function HelpCenter() {
       </section>
 
       {/* Categories Section */}
-      <section className="py-16">
+      <section className="py-16 flex justify-center">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">Browse by Category</h2>
@@ -270,7 +270,7 @@ export default function HelpCenter() {
       </section>
 
       {/* Popular Articles */}
-      <section className="py-16">
+      <section className="py-16 flex justify-center">
         <div className="container px-4 md:px-6">
           <div className="grid lg:grid-cols-2 gap-16">
             {/* Popular Articles */}
@@ -326,7 +326,7 @@ export default function HelpCenter() {
       </section>
 
       {/* Contact Support */}
-      <section className="py-16">
+      <section className="py-16 flex justify-center">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">Still Need Help?</h2>

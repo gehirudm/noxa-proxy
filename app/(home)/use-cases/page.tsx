@@ -127,7 +127,7 @@ export default function UseCases() {
   return (
     <>
       {/* Hero Section */}
-      <section className="py-16 md:py-24">
+      <section className="py-16 md:py-24 flex justify-center">
         <div className="container px-4 md:px-6">
           <div className="text-center max-w-4xl mx-auto">
             <Badge className="mb-6 bg-gradient-to-r from-orange-500/10 to-red-500/10 text-orange-600 dark:text-orange-400 border-orange-200 dark:border-orange-500/30">
@@ -145,7 +145,7 @@ export default function UseCases() {
       </section>
 
       {/* Use Cases Grid */}
-      <section className="py-16">
+      <section className="py-16 flex justify-center">
         <div className="container px-4 md:px-6">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {useCases.map((useCase, index) => {
@@ -187,7 +187,7 @@ export default function UseCases() {
       </section>
 
       {/* Industries Section */}
-      <section className="py-16 bg-muted/30">
+      <section className="py-16 bg-muted/30 flex justify-center">
         <div className="container px-4 md:px-6">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
@@ -224,7 +224,7 @@ export default function UseCases() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16">
+      <section className="py-16 flex justify-center">
         <div className="container px-4 md:px-6">
           <Card className="glass-effect border-orange-200/30 dark:border-orange-500/30 max-w-4xl mx-auto">
             <CardContent className="p-12 text-center">
