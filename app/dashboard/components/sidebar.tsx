@@ -29,9 +29,9 @@ export function Sidebar() {
   const menuItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard/", active: pathname === "/" },
     { icon: CreditCard, label: "Billing", href: "/dashboard/billing", active: pathname === "/billing" },
-    { icon: Users, label: "Referral", href: "/dashboard/referral", active: pathname === "/referral" },
+    // { icon: Users, label: "Referral", href: "/dashboard/referral", active: pathname === "/referral" },
     { icon: HelpCircle, label: "Support", href: "/dashboard/support", active: pathname === "/support" },
-    { icon: Settings, label: "Settings", href: "/dashboard/settings", active: pathname === "/settings" },
+    // { icon: Settings, label: "Settings", href: "/dashboard/settings", active: pathname === "/settings" },
   ]
 
   const proxyItems = [

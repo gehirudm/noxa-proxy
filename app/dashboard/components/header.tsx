@@ -36,9 +36,9 @@ export function Header() {
             <span className="font-semibold text-emerald-700 dark:text-emerald-300">$0</span>
           </div>
 
-          <Button variant="ghost" size="sm" className="p-2 hover:bg-muted/50">
+          {/* <Button variant="ghost" size="sm" className="p-2 hover:bg-muted/50">
             <Bell className="w-5 h-5" />
-          </Button>
+          </Button> */}
 
           <Button
             variant="ghost"
@@ -76,12 +76,12 @@ export function Header() {
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
+              {/* <DropdownMenuItem asChild>
                 <Link href="/dashboard/settings" className="flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </Link>
-              </DropdownMenuItem>
+              </DropdownMenuItem> */}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"

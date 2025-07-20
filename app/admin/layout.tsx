@@ -44,10 +44,10 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
               <Badge variant="secondary" className="bg-red-100 text-red-800">
                 Administrator
               </Badge>
-              <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
+              {/* <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white">
                 <Settings className="h-4 w-4 mr-2" />
                 Settings
-              </Button>
+              </Button> */}
               <Button variant="ghost" size="sm" className="text-gray-300 hover:text-white" onClick={logout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
