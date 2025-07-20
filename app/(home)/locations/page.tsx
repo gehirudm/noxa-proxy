@@ -300,8 +300,8 @@ export default function Locations() {
                   <Badge
                     variant="outline"
                     className={`text-xs w-fit ${location.type === "Residential"
-                        ? "border-green-200 text-green-600 dark:border-green-500/30 dark:text-green-400"
-                        : "border-blue-200 text-blue-600 dark:border-blue-500/30 dark:text-blue-400"
+                      ? "border-green-200 text-green-600 dark:border-green-500/30 dark:text-green-400"
+                      : "border-blue-200 text-blue-600 dark:border-blue-500/30 dark:text-blue-400"
                       }`}
                   >
                     {location.type}
@@ -360,13 +360,15 @@ export default function Locations() {
                   Contact Sales
                   <ArrowRight className="h-5 w-5 ml-2" />
                 </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-orange-200 dark:border-orange-500/30 hover:bg-orange-50 dark:hover:bg-orange-500/10"
-                >
-                  View Pricing
-                </Button>
+                <Link href={"/#products"}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-orange-200 dark:border-orange-500/30 hover:bg-orange-50 dark:hover:bg-orange-500/10"
+                  >
+                    View Pricing
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>

@@ -239,20 +239,24 @@ export default function UseCases() {
                 experience the difference.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-8"
-                >
-                  Start Free Trial
-                  <ArrowRight className="h-5 w-5 ml-2" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-orange-200 dark:border-orange-500/30 hover:bg-orange-50 dark:hover:bg-orange-500/10"
-                >
-                  View Pricing
-                </Button>
+                <Link href={"/auth"}>
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white px-8"
+                  >
+                    Start Free Trial
+                    <ArrowRight className="h-5 w-5 ml-2" />
+                  </Button>
+                </Link>
+                <Link href={"/#products"}>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-orange-200 dark:border-orange-500/30 hover:bg-orange-50 dark:hover:bg-orange-500/10"
+                  >
+                    View Pricing
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
