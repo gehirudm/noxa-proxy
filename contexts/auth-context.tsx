@@ -12,14 +12,18 @@ import {
   signOut,
   updateProfile,
   getIdToken,
+  GoogleAuthProvider,
+  signInWithPopup,
 } from "firebase/auth"
 import { auth } from "@/lib/firebase"
 import { doc, setDoc, getDoc, getFirestore } from "firebase/firestore"
 import { createEvomiSubUser } from "@/app/actions/user-actions"
 import { useRouter } from "next/navigation"
+import { clearSessionCookie, createSessionCookie } from "@/app/actions/auth-actions"
 
 interface UserData {
   uid: string;
+  profileImage?: string;
   username: string;
   email: string;
   createdAt: string;
@@ -40,6 +44,7 @@ interface AuthContextType {
   loading: boolean;
   evomiUsername: string | null;
   signIn: (email: string, password: string) => Promise<UserCredential>;
+  signInWithGoogle: () => Promise<User>;
   signUp: (username: string, email: string, password: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
   fetchUserData: () => Promise<UserData | null>;
@@ -61,29 +66,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const idToken = await getIdToken(user)
 
-      const response = await fetch('/api/auth/session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ idToken }),
-      })
+      // Create the session cookie using the server action
+      const result = await createSessionCookie(idToken);
 
-      if (!response.ok) {
-        throw new Error('Failed to create session')
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create session")
       }
     } catch (error) {
       console.error('Error creating session:', error)
     }
   }
 
-  // Function to fetch user data from Firestore
-  const fetchUserData = async (): Promise<UserData | null> => {
-    if (!user) return null;
-
+  const fetchUserData = async (_userId?: string): Promise<UserData | null> => {
+    const userId = _userId?? user?.uid;
+    if (!userId) return null;
+    
     try {
-      const userDocRef = doc(db, "users", user.uid);
+      const userDocRef = doc(db, "users", userId);
       const userDoc = await getDoc(userDocRef);
+
+      console.log(userDoc.data())
 
       if (userDoc.exists()) {
         const data = userDoc.data() as UserData;
@@ -104,7 +106,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Function to fetch Evomi username from Firestore
   const fetchEvomiUsername = async (userId: string) => {
     try {
       const userDoc = await getDoc(doc(db, "users", userId))
@@ -119,6 +120,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Function to check if user profile is complete and redirect if needed
+  const checkProfileCompletion = async (user: User) => {
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      // If user document doesn't exist or doesn't have Evomi username, redirect to complete profile
+      if (!userDoc.exists() || !userDoc.data()?.evomi?.username) {
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error checking profile completion:", error);
+      return false;
+    }
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user)
@@ -128,9 +147,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await createSession(user)
         // Fetch Evomi username
         await fetchEvomiUsername(user.uid)
+        // Fetch user data
+        await fetchUserData(user.uid)
       } else {
         // Clear Evomi username when user logs out
         setEvomiUsername(null)
+        setUserData(null)
       }
 
       setLoading(false)
@@ -144,6 +166,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await createSession(userCredential.user)
     await fetchEvomiUsername(userCredential.user.uid)
     return userCredential
+  }
+
+  const signInWithGoogle = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+
+      // Create session
+      await createSession(user);
+
+      // Check if user has a complete profile
+      const isProfileComplete = await checkProfileCompletion(user);
+
+      if (!isProfileComplete) router.push('/auth/complete-profile')
+      else router.push('/dashboard')
+
+      // If profile is not complete, the redirect happens in checkProfileCompletion
+      // Otherwise, we can return the user
+      return user;
+    } catch (error) {
+      console.error("Error signing in with Google:", error);
+      throw error;
+    }
   }
 
   const signUp = async (username: string, email: string, password: string) => {
@@ -202,12 +248,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     // Clear the session cookie
-    await fetch('/api/auth/session', {
-      method: 'DELETE',
-    })
+    await clearSessionCookie();
 
     // Clear Evomi username
     setEvomiUsername(null)
+    setUserData(null)
 
     await signOut(auth)
 
@@ -222,6 +267,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         loading,
         evomiUsername,
         signIn,
+        signInWithGoogle,
         signUp,
         logout,
         fetchUserData

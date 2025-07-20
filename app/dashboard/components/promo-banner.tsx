@@ -31,9 +31,6 @@ export function PromoBanner() {
           <div className="w-24 h-24 bg-white/10 rounded-lg flex items-center justify-center">
             <MapPin className="w-12 h-12 text-white" />
           </div>
-          <div className="w-32 h-24 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-            <MapPin className="w-16 h-16 text-white" />
-          </div>
         </div>
       </div>
     </div>

@@ -24,7 +24,7 @@ export type SubscriptionData = {
  * Validates the session and returns the user ID
  */
 async function validateSession(): Promise<string | null> {
-  const sessionCookie = (await cookies()).get("session")?.value
+  const sessionCookie = (await cookies()).get("firebaseSessionCookie")?.value
 
   if (!sessionCookie) {
     return null
@@ -302,5 +302,68 @@ export async function getUserSubscriptions() {
       success: false,
       error: error instanceof Error ? error.message : "Unknown error occurred"
     }
+  }
+}
+
+
+/**
+ * Updates a user's profile information in Firestore
+ * @param profileData Object containing the profile data to update
+ * @returns Object containing success status and either a success message or an error message
+ */
+export async function updateUserProfile(profileData: {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  bio?: string;
+  location?: string;
+}) {
+  try {
+    // Validate session and get user ID
+    const userId = await validateSession();
+    if (!userId) {
+      return {
+        success: false,
+        error: "Authentication required"
+      };
+    }
+
+    // Get the user document reference
+    const userDocRef = db.collection("users").doc(userId);
+    
+    // Get current user data to preserve existing fields
+    const userDoc = await userDocRef.get();
+    if (!userDoc.exists) {
+      return {
+        success: false,
+        error: "User document not found"
+      };
+    }
+
+    // Update the user document with the new profile data
+    await userDocRef.update({
+      firstName: profileData.firstName,
+      lastName: profileData.lastName,
+      username: `${profileData.firstName} ${profileData.lastName}`.trim(),
+      phone: profileData.phone || null,
+      bio: profileData.bio || null,
+      location: profileData.location || null,
+      updatedAt: new Date().toISOString()
+    });
+
+    // Revalidate any paths that might display user data
+    revalidatePath("/dashboard/profile");
+    revalidatePath("/dashboard");
+
+    return {
+      success: true,
+      message: "Profile updated successfully"
+    };
+  } catch (error) {
+    console.error("Failed to update user profile:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error occurred"
+    };
   }
 }

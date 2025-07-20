@@ -333,7 +333,7 @@ export default function HelpCenter() {
             <p className="text-lg text-muted-foreground">Our support team is available 24/7 to assist you</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl mx-auto">
             <Card className="glass-effect border-blue-200/30 dark:border-blue-500/30 hover:shadow-xl transition-all duration-300 hover:scale-105 text-center">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
@@ -355,10 +355,12 @@ export default function HelpCenter() {
                 </div>
                 <h3 className="font-semibold text-foreground mb-2">Discord</h3>
                 <p className="text-sm text-muted-foreground mb-4">Join our community server</p>
-                <Button className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white">
-                  Join Discord
-                  <ExternalLink className="h-4 w-4 ml-2" />
-                </Button>
+                <Link href={"https://discord.gg/8tR6RBNgUW"}>
+                  <Button className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white">
+                    Join Discord
+                    <ExternalLink className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -369,24 +371,12 @@ export default function HelpCenter() {
                 </div>
                 <h3 className="font-semibold text-foreground mb-2">Telegram</h3>
                 <p className="text-sm text-muted-foreground mb-4">Message us on Telegram</p>
-                <Button className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white">
-                  Open Telegram
-                  <ExternalLink className="h-4 w-4 ml-2" />
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-effect border-green-200/30 dark:border-green-500/30 hover:shadow-xl transition-all duration-300 hover:scale-105 text-center">
-              <CardContent className="p-6">
-                <div className="w-12 h-12 bg-gradient-to-r from-green-400 to-green-500 rounded-xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Mail className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Email</h3>
-                <p className="text-sm text-muted-foreground mb-4">Send us an email</p>
-                <Button className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white">
-                  Send Email
-                  <ExternalLink className="h-4 w-4 ml-2" />
-                </Button>
+                <Link href={"https://t.me/noxaproxy"}>
+                  <Button className="w-full bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-600 hover:to-cyan-700 text-white">
+                    Open Telegram
+                    <ExternalLink className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>

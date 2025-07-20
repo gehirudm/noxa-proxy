@@ -30,7 +30,7 @@ function generateOrderId(): string {
  * Validates the session and returns the user ID
  */
 async function validateSession(): Promise<string | null> {
-    const sessionCookie = (await cookies()).get("session")?.value
+    const sessionCookie = (await cookies()).get("firebaseSessionCookie")?.value
 
     if (!sessionCookie) {
         return null
@@ -95,7 +95,7 @@ export async function handleProxyPlanPurchase({
 
     // Base URLs for success and cancel
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    const sessionParam = `sessionId=${encodeURIComponent((await cookies()).get("session")?.value || "")}`
+    const sessionParam = `sessionId=${encodeURIComponent((await cookies()).get("firebaseSessionCookie")?.value || "")}`
     const providerParam = `provider=${paymentProvider}`
     const orderIdParam = `orderId=${orderId}`
     const planTypeParam = `planType=${proxyType}`
@@ -328,7 +328,7 @@ export async function handleWalletDeposit({
 
     // Base URLs for success and cancel
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    const sessionParam = `sessionId=${encodeURIComponent((await cookies()).get("session")?.value || "")}`
+    const sessionParam = `sessionId=${encodeURIComponent((await cookies()).get("firebaseSessionCookie")?.value || "")}`
     const providerParam = `provider=${paymentProvider}`
     const orderIdParam = `orderId=${orderId}`
     const amountParam = `amount=${amount}`

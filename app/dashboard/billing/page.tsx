@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { CreditCard, Plus, ChevronRight, Filter, RotateCcw } from "lucide-react"
+import { WalletBalanceCard } from "./components/deposit"
 
 export default function BillingPage() {
   const [activeTimeRange, setActiveTimeRange] = useState("1D")
@@ -30,23 +31,7 @@ export default function BillingPage() {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-8">
               {/* Left Column - Wallet & Quick Actions */}
               <div className="lg:col-span-1 space-y-4">
-                <Card className="bg-card border-border">
-                  <CardHeader>
-                    <CardTitle className="text-foreground text-sm font-medium">Wallet balance</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <CreditCard className="w-5 h-5 text-pink-500" />
-                        <span className="text-2xl font-bold text-foreground">$0</span>
-                      </div>
-                    </div>
-                    <Button className="w-full bg-muted hover:bg-muted/80 text-foreground" variant="secondary">
-                      <Plus className="w-4 h-4 mr-2" />
-                      Deposit
-                    </Button>
-                  </CardContent>
-                </Card>
+                <WalletBalanceCard/>
 
                 <Card className="bg-card border-border">
                   <CardContent className="p-4">

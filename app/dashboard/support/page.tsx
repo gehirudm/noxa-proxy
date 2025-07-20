@@ -5,12 +5,13 @@ import { Header } from "../components/header"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Mail } from "lucide-react"
-import { SupportTabs } from "@/components/support-tabs"
+import { SupportTabs } from "@/app/dashboard/support/components/support-tabs"
+import Link from "next/link"
 
 export default async function SupportPage() {
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen text-white">
       <div className="flex">
         <Sidebar />
         <div className="flex-1">
@@ -44,7 +45,9 @@ export default async function SupportPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">Join our Discord community for support and updates</p>
-                  <Button className="bg-indigo-600 hover:bg-indigo-700 w-full">Join Discord</Button>
+                  <Link href={"https://discord.gg/8tR6RBNgUW"}>
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 w-full">Join Discord</Button>
+                  </Link>
                 </CardContent>
               </Card>
 
@@ -57,7 +60,9 @@ export default async function SupportPage() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground mb-4">Contact us directly via Telegram for quick support</p>
-                  <Button className="bg-blue-500 hover:bg-blue-600 w-full">Open Telegram</Button>
+                  <Link href={"https://t.me/noxaproxy"}>
+                    <Button className="bg-blue-500 hover:bg-blue-600 w-full">Open Telegram</Button>
+                  </Link>
                 </CardContent>
               </Card>
             </div>

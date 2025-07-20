@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Globe } from "lucide-react"
+import { useAuth } from "@/contexts/auth-context"
 
 type ProxyType = 'residential' | 'sharedDataCenter' | 'dataCenter' | 'dataCenterIPV6' | 'dataCenterIPV4' | 'mobile';
 
@@ -24,6 +25,8 @@ export function ProxyUrlGenerator({
     const [lifetime, setLifetime] = useState<string>("");
     const [httpProxy, setHttpProxy] = useState<string>("");
     const [socksProxy, setSocksProxy] = useState<string>("");
+
+    const { userData } = useAuth();
 
     // This would typically come from an API
     const countries = [
@@ -58,8 +61,8 @@ export function ProxyUrlGenerator({
     const handleGenerateProxyLinks = () => {
         // This would typically call an API to generate the links
         // For now, we'll just set some example values
-        const username = "username";
-        const password = "password";
+        const username = userData?.evomi?.username;
+        const password = userData?.evomi?.products[proxyType].proxy_key;
 
         const endpoints: Record<ProxyType, { host: string; httpPort: number; socksPort: number }> = {
             residential: { host: 'rp.evomi.com', httpPort: 1000, socksPort: 1002 },

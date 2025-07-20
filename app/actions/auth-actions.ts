@@ -1,17 +1,20 @@
+"use server"
+
 import { cookies } from "next/headers"
-import { NextRequest, NextResponse } from "next/server"
 import { auth as adminAuth } from "@/lib/firebase-admin"
 
-// This endpoint creates a session cookie using the Firebase ID token
-export async function POST(request: NextRequest) {
+/**
+ * Creates a Firebase session cookie from an ID token
+ * @param idToken Firebase ID token from client authentication
+ * @returns Object containing success status and optional error message
+ */
+export async function createSessionCookie(idToken: string) {
   try {
-    const { idToken } = await request.json()
-    
     if (!idToken) {
-      return NextResponse.json(
-        { error: "Missing ID token" },
-        { status: 400 }
-      )
+      return {
+        success: false,
+        error: "Missing ID token"
+      }
     }
     
     // Create a session cookie using the Firebase Admin SDK
@@ -31,18 +34,20 @@ export async function POST(request: NextRequest) {
       sameSite: "strict"
     })
     
-    return NextResponse.json({ success: true })
+    return { success: true }
   } catch (error) {
     console.error("Failed to create session cookie:", error)
-    return NextResponse.json(
-      { error: "Failed to create session" },
-      { status: 401 }
-    )
+    return {
+      success: false,
+      error: "Failed to create session"
+    }
   }
 }
 
-// This endpoint clears the session cookie for logout
-export async function DELETE() {
+/**
+ * Clears the Firebase session cookie for logout
+ */
+export async function clearSessionCookie() {
   (await cookies()).delete("firebaseSessionCookie")
-  return NextResponse.json({ success: true })
+  return { success: true }
 }

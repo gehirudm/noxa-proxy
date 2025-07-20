@@ -130,7 +130,7 @@ export function ActiveSubscriptions() {
           variant="outline"
           size="sm"
           className="border-border text-foreground hover:bg-muted/50 transition-colors"
-          onClick={() => router.push('/proxies')}
+          onClick={() => router.push('/dashboard/proxies')}
         >
           <Settings className="w-4 h-4 mr-2" />
           Manage All
@@ -263,7 +263,7 @@ export function ActiveSubscriptions() {
                 </p>
                 <Button 
                   className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white shadow-md"
-                  onClick={() => router.push('/proxies?show=plans')}
+                  onClick={() => router.push('/dashboard/proxies')}
                 >
                   <Zap className="w-4 h-4 mr-2" />
                   Browse Plans

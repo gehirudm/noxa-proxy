@@ -34,7 +34,7 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const { signIn, signUp } = useAuth()
+  const { signIn, signInWithGoogle, signUp } = useAuth()
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -85,9 +85,8 @@ export default function LoginForm() {
     try {
       setLoading(true)
       setError(null)
-      const provider = new GoogleAuthProvider()
-      await signInWithPopup(auth, provider)
-      router.push("/dashboard")
+      
+      await signInWithGoogle()
     } catch (err: any) {
       console.error("Google login error:", err)
       setError("Failed to login with Google. Please try again.")

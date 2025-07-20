@@ -1,36 +1,23 @@
 "use client"
 
+import { Shield, Settings, LogOut } from "lucide-react"
+import Link from "next/link"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { AuthProvider, useAuth } from "@/contexts/auth-context"
+import { useState, ReactNode, useEffect } from "react"
+import { usePathname, useRouter } from "next/navigation"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Shield, Settings, LogOut } from "lucide-react"
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useState, ReactNode, useEffect } from "react"
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
-import { AuthProvider, useAuth } from "@/contexts/auth-context"
+import { AdminGuard } from "@/components/guards/admin-guard"
 
 interface AdminLayoutProps {
-  children: ReactNode
+  children: React.ReactNode
 }
 
 function AdminLayoutContent({ children }: AdminLayoutProps) {
   const pathname = usePathname()
   const router = useRouter()
-  const { userData, user, logout } = useAuth()
-
-  // Redirect non-admin users to auth page
-  useEffect(() => {
-    if (user && userData && userData.role !== "admin") {
-      router.push("/auth")
-    } else if (!user) {
-      router.push("/auth")
-    }
-  }, [user, router])
-
-  // If user is not admin or not logged in, don't render the admin layout
-  if (!user || !userData || userData.role !== "admin") {
-    return null
-  }
+  const { userData, logout } = useAuth()
 
   // Determine active tab based on the current path
   const getActiveTab = () => {
@@ -141,7 +128,9 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <AuthProvider>
-      <AdminLayoutContent children={children} />
+      <AdminGuard>
+        <AdminLayoutContent children={children} />
+      </AdminGuard>
     </AuthProvider>
   )
 }

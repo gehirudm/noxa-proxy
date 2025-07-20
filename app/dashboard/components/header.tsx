@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation"
 
 export function Header() {
   const { theme, setTheme } = useTheme()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
 
   return (
     <header className="bg-background border-b border-border px-6 py-4">
@@ -71,13 +71,13 @@ export function Header() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link href="/profile" className="flex items-center">
+                <Link href="/dashboard/profile" className="flex items-center">
                   <UserCircle className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
-                <Link href="/settings" className="flex items-center">
+                <Link href="/dashboard/settings" className="flex items-center">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </Link>
@@ -85,6 +85,7 @@ export function Header() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="text-red-600 focus:text-red-600"
+                onClick={() => logout()}
               >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>

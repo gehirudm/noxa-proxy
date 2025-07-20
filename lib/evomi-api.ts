@@ -67,7 +67,73 @@ export interface ApiResponse<T> {
   timestamp: number
 }
 
-export class EvomiAPI {
+/**
+ * Base EvomiAPI class with shared methods
+ */
+class BaseEvomiAPI {
+  getProductDisplayName(productType: string): string {
+    const displayNames: { [key: string]: string } = {
+      residential: "Residential",
+      sharedDataCenter: "Shared Data Center",
+      dataCenter: "Data Center",
+      dataCenterIPV6: "Data Center IPv6",
+      mobile: "Mobile",
+      residentialIPV6: "Residential IPv6",
+    }
+    return displayNames[productType] || productType
+  }
+
+  isProductExpired(product: ProductWithExpiry): boolean {
+    if (!product.expiresAt || product.expiresAt === "0001-01-01T00:00:00Z") {
+      return false // No expiry set
+    }
+    return new Date(product.expiresAt) < new Date()
+  }
+
+  generateProxyLinks(
+    proxyKey: string,
+    username: string,
+    product: 'residential' | 'sharedDataCenter' | 'dataCenter' | 'dataCenterIPV6' | 'mobile',
+    options?: {
+      countryCode?: string
+      regionId?: string
+      cityId?: string
+      sessionId?: string
+      lifetime?: number
+      ispValue?: string
+    }
+  ): { http: string; socks5: string } {
+    const endpoints: Record<string, { host: string; httpPort: number; socksPort: number }> = {
+      residential: { host: 'rp.evomi.com', httpPort: 1000, socksPort: 1002 },
+      sharedDataCenter: { host: 'shared-datacenter.evomi.com', httpPort: 2000, socksPort: 2002 },
+      dataCenter: { host: 'dcp.evomi.com', httpPort: 2000, socksPort: 2002 },
+      dataCenterIPV6: { host: 'datacenter-ipv6.evomi.com', httpPort: 2000, socksPort: 2002 },
+      mobile: { host: 'mp.evomi.com', httpPort: 3000, socksPort: 3002 },
+    }
+    const cfg = endpoints[product]
+    let pwd = proxyKey
+
+    if (options) {
+      if (options.countryCode) pwd += `_country-${options.countryCode}`
+      if (options.regionId) pwd += `_region-${options.regionId}`
+      if (options.cityId) pwd += `_city-${options.cityId}`
+      if (options.ispValue) pwd += `_isp-${options.ispValue}`
+      if (options.sessionId) pwd += `_session-${options.sessionId}`
+      if (options.lifetime) pwd += `_lifetime-${options.lifetime}`
+    }
+
+    const creds = encodeURIComponent(username) + ':' + encodeURIComponent(pwd)
+    return {
+      http: `http://${creds}@${cfg.host}:${cfg.httpPort}`,
+      socks5: `socks5://${creds}@${cfg.host}:${cfg.socksPort}`,
+    }
+  }
+}
+
+/**
+ * Real implementation of EvomiAPI that makes actual API calls
+ */
+class RealEvomiAPI extends BaseEvomiAPI {
   private headers = {
     "X-API-KEY": API_KEY!,
     "Content-Type": "application/json",
@@ -232,65 +298,243 @@ export class EvomiAPI {
     const apiResponse: ApiResponse<ProxySettingsData> = await resp.json()
     return apiResponse.data
   }
+}
 
+/**
+ * Mock implementation of EvomiAPI that returns dummy data
+ */
+class MockEvomiAPI extends BaseEvomiAPI {
+  private generateRandomProxyKey(): string {
+    return Math.random().toString(36).substring(2, 15);
+  }
 
-  generateProxyLinks(
-    proxyKey: string,
+  private generateTimestamps(count: number, interval: number = 3600000): Record<string, number> {
+    const now = Date.now();
+    const stats: Record<string, number> = {};
+    
+    for (let i = 0; i < count; i++) {
+      const timestamp = new Date(now - (i * interval)).toISOString();
+      stats[timestamp] = Math.floor(Math.random() * 500) + 10; // Random MB between 10 and 510
+    }
+    
+    return stats;
+  }
+
+  private createMockSubUser(username: string, email: string): SubUser {
+    const now = new Date().toISOString();
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days from now
+    
+    return {
+      username,
+      email,
+      created_at: now,
+      updated_at: now,
+      products: {
+        residential: {
+          balance: 5000, // 5 GB
+          proxy_key: this.generateRandomProxyKey()
+        },
+        sharedDataCenter: {
+          balance: 10000, // 10 GB
+          proxy_key: this.generateRandomProxyKey()
+        },
+        mobile: {
+          balance: 2000, // 2 GB
+          proxy_key: this.generateRandomProxyKey()
+        },
+        dataCenter: {
+          proxy_key: this.generateRandomProxyKey(),
+          threadCap: 10,
+          expiresAt,
+          expiresInHours: 720, // 30 days
+          balance: 15000 // 15 GB
+        },
+        dataCenterIPV6: {
+          proxy_key: this.generateRandomProxyKey(),
+          threadCap: 5,
+          expiresAt,
+          expiresInHours: 720,
+          balance: 8000 // 8 GB
+        }
+      }
+    };
+  }
+
+  async createSubUser(username: string, email: string): Promise<SubUser> {
+    console.log("[MOCK] Creating subuser:", username, email);
+    return this.createMockSubUser(username, email);
+  }
+
+  async getSubUsers(): Promise<SubUser[]> {
+    console.log("[MOCK] Getting all subusers");
+    return [
+      this.createMockSubUser("user1", "user1@example.com"),
+      this.createMockSubUser("user2", "user2@example.com"),
+      this.createMockSubUser("user3", "user3@example.com")
+    ];
+  }
+
+  async getSubUser(username: string): Promise<SubUser> {
+    console.log("[MOCK] Getting subuser:", username);
+    return this.createMockSubUser(username, `${username}@example.com`);
+  }
+
+  async getUsageHistory(username: string, duration = "24h", granularity = "hour"): Promise<UsageHistory> {
+    console.log("[MOCK] Getting usage history for:", username, duration, granularity);
+    
+    // Determine number of data points based on duration and granularity
+    let dataPoints = 24;
+    let interval = 3600000; // 1 hour in ms
+    
+    if (duration === "7d") {
+      dataPoints = granularity === "day" ? 7 : 7 * 24;
+    } else if (duration === "30d") {
+      dataPoints = granularity === "day" ? 30 : 30 * 24;
+    }
+    
+    if (granularity === "day") {
+      interval = 86400000; // 1 day in ms
+    }
+    
+    return {
+      products: [
+        {
+          name: "residential",
+          totalBandwidth: 5000,
+          stats: this.generateTimestamps(dataPoints, interval)
+        },
+        {
+          name: "sharedDataCenter",
+          totalBandwidth: 10000,
+          stats: this.generateTimestamps(dataPoints, interval)
+        },
+        {
+          name: "mobile",
+          totalBandwidth: 2000,
+          stats: this.generateTimestamps(dataPoints, interval)
+        }
+      ]
+    };
+  }
+
+  async giveBalance(
+    username: string,
+    product: 'residential' | 'sharedDataCenter' | 'mobile',
+    mbAmount: number,
+  ): Promise<SubUser> {
+    console.log(`[MOCK] Adding ${mbAmount}MB to ${username}'s ${product} balance`);
+    const user = await this.getSubUser(username);
+    
+    if (user.products[product]) {
+      user.products[product]!.balance += mbAmount;
+    } else {
+      user.products[product] = {
+        balance: mbAmount,
+        proxy_key: this.generateRandomProxyKey()
+      };
+    }
+    
+    return user;
+  }
+
+  async takeBalance(
+    username: string,
+    product: 'residential' | 'sharedDataCenter' | 'mobile',
+    mbAmount: number,
+  ): Promise<SubUser> {
+    console.log(`[MOCK] Removing ${mbAmount}MB from ${username}'s ${product} balance`);
+    const user = await this.getSubUser(username);
+    
+    if (user.products[product]) {
+      user.products[product]!.balance = Math.max(0, user.products[product]!.balance - mbAmount);
+    }
+    
+    return user;
+  }
+
+  async resetProxyKey(
     username: string,
     product: 'residential' | 'sharedDataCenter' | 'dataCenter' | 'dataCenterIPV6' | 'mobile',
-    options?: {
-      countryCode?: string
-      regionId?: string
-      cityId?: string
-      sessionId?: string
-      lifetime?: number
-      ispValue?: string
+  ): Promise<SubUser> {
+    console.log(`[MOCK] Resetting ${username}'s ${product} proxy key`);
+    const user = await this.getSubUser(username);
+    
+    if (user.products[product]) {
+      user.products[product]!.proxy_key = this.generateRandomProxyKey();
     }
-  ): { http: string; socks5: string } {
-    const endpoints: Record<string, { host: string; httpPort: number; socksPort: number }> = {
-      residential: { host: 'rp.evomi.com', httpPort: 1000, socksPort: 1002 },
-      sharedDataCenter: { host: 'shared-datacenter.evomi.com', httpPort: 2000, socksPort: 2002 },
-      dataCenter: { host: 'dcp.evomi.com', httpPort: 2000, socksPort: 2002 },
-      dataCenterIPV6: { host: 'datacenter-ipv6.evomi.com', httpPort: 2000, socksPort: 2002 },
-      mobile: { host: 'mp.evomi.com', httpPort: 3000, socksPort: 3002 },
-    }
-    const cfg = endpoints[product]
-    let pwd = proxyKey
+    
+    return user;
+  }
 
-    if (options) {
-      if (options.countryCode) pwd += `_country-${options.countryCode}`
-      if (options.regionId) pwd += `_region-${options.regionId}`
-      if (options.cityId) pwd += `_city-${options.cityId}`
-      if (options.ispValue) pwd += `_isp-${options.ispValue}`
-      if (options.sessionId) pwd += `_session-${options.sessionId}`
-      if (options.lifetime) pwd += `_lifetime-${options.lifetime}`
-    }
+  async checkStatus(): Promise<{ status: string; message: string }> {
+    console.log("[MOCK] Checking API status");
+    return { status: "online", message: "Mock API is operational" };
+  }
 
-    const creds = encodeURIComponent(username) + ':' + encodeURIComponent(pwd)
+  async getProxySettings(): Promise<ProxySettingsData> {
+    console.log("[MOCK] Getting proxy settings");
+    
+    const mockCountries: Record<string, string> = {
+      "US": "United States",
+      "GB": "United Kingdom",
+      "DE": "Germany",
+      "FR": "France",
+      "JP": "Japan",
+      "AU": "Australia",
+      "CA": "Canada",
+      "IN": "India",
+      "BR": "Brazil",
+      "RU": "Russia"
+    };
+    
+    const mockRegions = {
+      data: [
+        { id: "CA", name: "California" },
+        { id: "TX", name: "Texas" },
+        { id: "NY", name: "New York" },
+        { id: "FL", name: "Florida" },
+        { id: "IL", name: "Illinois" }
+      ]
+    };
+    
+    const mockCities = {
+      data: [
+        { id: "LA", name: "Los Angeles", country_code: "US" },
+        { id: "NY", name: "New York", country_code: "US" },
+        { id: "CH", name: "Chicago", country_code: "US" },
+        { id: "LO", name: "London", country_code: "GB" },
+        { id: "BE", name: "Berlin", country_code: "DE" }
+      ]
+    };
+    
+    const mockISP: Record<string, { value: string; countryCode: string }> = {
+      "ATT": { value: "AT&T", countryCode: "US" },
+      "VER": { value: "Verizon", countryCode: "US" },
+      "COM": { value: "Comcast", countryCode: "US" },
+      "BT": { value: "British Telecom", countryCode: "GB" },
+      "DT": { value: "Deutsche Telekom", countryCode: "DE" }
+    };
+    
+    const mockCategory: ProxySettingCategory = {
+      countries: mockCountries,
+      regions: mockRegions,
+      cities: mockCities,
+      isp: mockISP,
+      continents: null
+    };
+    
     return {
-      http: `http://${creds}@${cfg.host}:${cfg.httpPort}`,
-      socks5: `socks5://${creds}@${cfg.host}:${cfg.socksPort}`,
-    }
-  }
-
-  getProductDisplayName(productType: string): string {
-    const displayNames: { [key: string]: string } = {
-      residential: "Residential",
-      sharedDataCenter: "Shared Data Center",
-      dataCenter: "Data Center",
-      dataCenterIPV6: "Data Center IPv6",
-      mobile: "Mobile",
-      residentialIPV6: "Residential IPv6",
-    }
-    return displayNames[productType] || productType
-  }
-
-  isProductExpired(product: ProductWithExpiry): boolean {
-    if (!product.expiresAt || product.expiresAt === "0001-01-01T00:00:00Z") {
-      return false // No expiry set
-    }
-    return new Date(product.expiresAt) < new Date()
+      residential: mockCategory,
+      residentialIPV6: mockCategory,
+      mobile: mockCategory,
+      dataCenter: mockCategory,
+      dataCenterIPV6: mockCategory,
+      sharedDataCenter: mockCategory
+    };
   }
 }
 
-export const evomiAPI = new EvomiAPI()
+// Export the appropriate implementation based on whether API_KEY is available
+export const evomiAPI = API_KEY 
+  ? new RealEvomiAPI() 
+  : new MockEvomiAPI();
