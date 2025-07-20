@@ -1,5 +1,7 @@
+"use server"
+
 import { cookies } from "next/headers"
-import { auth as adminAuth, db } from "./firebase-admin"
+import { auth as adminAuth, db } from "../../lib/firebase-admin"
 
 export interface AuthUser {
   uid: string
@@ -14,8 +16,8 @@ export interface AuthUser {
  */
 export async function getAuthUser(): Promise<AuthUser | null> {
   try {
-    const sessionCookie = (await cookies()).get("firesbaseSessionCookie")?.value
-    
+    const sessionCookie = (await cookies()).get("firebaseSessionCookie")?.value
+
     if (!sessionCookie) {
       return null
     }
