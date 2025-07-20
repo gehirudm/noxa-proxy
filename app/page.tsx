@@ -116,7 +116,7 @@ const CompanyCard = ({ company }: { company: Company }) => {
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100 dark:from-slate-900 dark:via-blue-900 dark:to-slate-800 w-full">
-      <Header/>
+      <Header />
 
       {/* Hero Section */}
       <section className="py-20 md:py-32 relative overflow-hidden">
@@ -264,12 +264,14 @@ export default function LandingPage() {
                         <span className="text-2xl font-bold text-slate-900 dark:text-white">$2.75</span>
                         <span className="text-slate-500 dark:text-slate-400">/GB</span>
                       </div>
-                      <Button
-                        size="sm"
-                        className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300"
-                      >
-                        Buy Now
-                      </Button>
+                      <Link href={"/dashboard/proxies/static-residential"}>
+                        <Button
+                          size="sm"
+                          className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white shadow-lg shadow-green-500/25 hover:shadow-green-500/40 transition-all duration-300"
+                        >
+                          Buy Now
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </CardContent>
