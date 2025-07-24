@@ -10,6 +10,8 @@ import { ArrowLeft, Zap, Mail } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
+import { sendPasswordResetEmail } from "firebase/auth"
+import { auth } from "@/lib/firebase/firebase"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("")
@@ -25,16 +27,33 @@ export default function ForgotPasswordPage() {
     setError(null)
     
     try {
-      // Handle forgot password logic here
-      console.log("Password reset request for:", email)
+      // Send password reset email using Firebase
+      await sendPasswordResetEmail(auth, email, {
+        // This URL will be appended to the password reset link
+        // The user will be redirected here after clicking the link in the email
+        url: `${window.location.origin}/auth/forgot-password/confirm`,
+        handleCodeInApp: true,
+      })
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      console.log("Password reset email sent to:", email)
       setIsSubmitted(true)
     } catch (err: any) {
       console.error("Password reset error:", err)
-      setError(err.message || "Failed to send reset link. Please try again.")
+      
+      // Handle specific Firebase errors
+      if (err.code === 'auth/user-not-found') {
+        // For security reasons, don't reveal if the email exists or not
+        // Still show success message to prevent email enumeration attacks
+        setIsSubmitted(true)
+      } else if (err.code === 'auth/invalid-email') {
+        setError("Please enter a valid email address.")
+      } else if (err.code === 'auth/missing-continue-uri') {
+        setError("Configuration error. Please contact support.")
+      } else if (err.code === 'auth/unauthorized-continue-uri') {
+        setError("Configuration error with redirect. Please contact support.")
+      } else {
+        setError("An error occurred. Please try again later.")
+      }
     } finally {
       setLoading(false)
     }
@@ -120,6 +139,9 @@ export default function ForgotPasswordPage() {
                     If an account with email <strong className="text-white">{email}</strong> exists, you will receive a
                     password reset link shortly.
                   </p>
+                  <div className="pt-2 text-sm text-gray-400">
+                    <p>Didn't receive the email? Check your spam folder or try again in a few minutes.</p>
+                  </div>
                   <div className="space-y-3">
                     <Button 
                       className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-3 rounded-lg transition-all duration-200"

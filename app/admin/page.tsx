@@ -38,19 +38,6 @@ export default function AdminOverview() {
         <Card className="bg-slate-800/50 border-blue-700/50 backdrop-blur-sm">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium text-gray-300 flex items-center">
-              <Server className="h-4 w-4 mr-2" />
-              Active Proxies
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-white">{stats.activeProxies}</p>
-            <p className="text-sm text-blue-400">98.5% uptime</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-800/50 border-blue-700/50 backdrop-blur-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-300 flex items-center">
               <Activity className="h-4 w-4 mr-2" />
               Daily Bandwidth
             </CardTitle>
@@ -76,7 +63,7 @@ export default function AdminOverview() {
       </div>
 
       {/* Country-based Connections Chart */}
-      <Card className="bg-slate-800/50 border-blue-700/50 backdrop-blur-sm">
+      {/* <Card className="bg-slate-800/50 border-blue-700/50 backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-white">Country-based Connections</CardTitle>
         </CardHeader>
@@ -111,7 +98,7 @@ export default function AdminOverview() {
             </div>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
     </>
   )
 }

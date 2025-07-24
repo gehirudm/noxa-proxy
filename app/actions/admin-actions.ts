@@ -1,7 +1,7 @@
 "use server"
 
-import { getAuthUser } from "@/app/actions/auth-utils"
-import { db, convertTimestamps } from "@/lib/firebase-admin"
+import { getAuthUser } from "@/lib/auth-utils"
+import { db, convertTimestamps } from "@/lib/firebase/firebase-admin"
 import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 

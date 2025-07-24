@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/lib/firebase/firebase"
 
 export function AuthPage() {
   const [email, setEmail] = useState("")

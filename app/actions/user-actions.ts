@@ -2,7 +2,7 @@
 
 import { evomiAPI, SubUser } from "@/lib/evomi-api"
 import { revalidatePath } from "next/cache"
-import { auth, db } from "@/lib/firebase-admin"
+import { auth, db } from "@/lib/firebase/firebase-admin"
 import { cookies } from "next/headers"
 
 export type SubscriptionData = {

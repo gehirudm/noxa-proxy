@@ -22,7 +22,7 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   // Determine active tab based on the current path
   const getActiveTab = () => {
     if (pathname.includes("/admin/users")) return "users"
-    if (pathname.includes("/admin/proxies")) return "proxies"
+    // if (pathname.includes("/admin/proxies")) return "proxies"
     if (pathname.includes("/admin/payments")) return "payments"
     if (pathname.includes("/admin/system")) return "system"
     return "overview" // Default tab
@@ -78,14 +78,14 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
                   Users
                 </TabsTrigger>
               </Link>
-              <Link href="/admin/proxies">
+              {/* <Link href="/admin/proxies">
                 <TabsTrigger
                   value="proxies"
                   className={`data-[state=active]:bg-slate-700 ${getActiveTab() === "proxies" ? "bg-slate-700" : ""}`}
                 >
                   Proxies
                 </TabsTrigger>
-              </Link>
+              </Link> */}
               <Link href="/admin/payments">
                 <TabsTrigger
                   value="payments"
@@ -94,14 +94,14 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
                   Payments
                 </TabsTrigger>
               </Link>
-              <Link href="/admin/system">
+              {/* <Link href="/admin/system">
                 <TabsTrigger
                   value="system"
                   className={`data-[state=active]:bg-slate-700 ${getActiveTab() === "system" ? "bg-slate-700" : ""}`}
                 >
                   System
                 </TabsTrigger>
-              </Link>
+              </Link> */}
             </TabsList>
           </Tabs>
         </div>

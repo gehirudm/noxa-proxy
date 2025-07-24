@@ -15,7 +15,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/lib/firebase/firebase"
 import { doc, setDoc, getDoc, getFirestore } from "firebase/firestore"
 import { createEvomiSubUser } from "@/app/actions/user-actions"
 import { useRouter } from "next/navigation"

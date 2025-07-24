@@ -12,7 +12,7 @@ import Image from "next/image"
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, updateProfile } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/lib/firebase/firebase"
 import Link from "next/link"
 import { createParser, useQueryState } from 'nuqs'
 

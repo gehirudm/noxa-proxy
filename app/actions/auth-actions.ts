@@ -1,7 +1,7 @@
 "use server"
 
 import { cookies } from "next/headers"
-import { auth as adminAuth } from "@/lib/firebase-admin"
+import { auth as adminAuth } from "@/lib/firebase/firebase-admin"
 
 /**
  * Creates a Firebase session cookie from an ID token

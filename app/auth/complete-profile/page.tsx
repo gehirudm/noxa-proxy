@@ -13,7 +13,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { updateProfile } from "firebase/auth"
-import { auth } from "@/lib/firebase"
+import { auth } from "@/lib/firebase/firebase"
 import { doc, setDoc, getFirestore } from "firebase/firestore"
 import { createEvomiSubUser } from "@/app/actions/user-actions"
 
