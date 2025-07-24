@@ -1,8 +1,8 @@
 "use server"
 
+import { getAuthUser } from "@/lib/auth-utils"
 import { db, auth, convertTimestamps } from "@/lib/firebase/firebase-admin"
 import { revalidatePath } from "next/cache"
-import { getAuthUser } from "@/app/actions/auth-utils"
 
 export type TicketPriority = "Low" | "Medium" | "High" | "Critical"
 export type TicketStatus = "Open" | "In Progress" | "Resolved" | "Closed"
