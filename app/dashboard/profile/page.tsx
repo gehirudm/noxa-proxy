@@ -267,7 +267,7 @@ export default function ProfilePage() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-card border-border">
+                {/* <Card className="bg-card border-border">
                   <CardHeader>
                     <CardTitle className="text-foreground">Account Statistics</CardTitle>
                   </CardHeader>
@@ -293,7 +293,7 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </CardContent>
-                </Card>
+                </Card> */}
               </div>
             </div>
           </main>

@@ -1,6 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import "./globals.css"
+import { AuthGuard } from "@/components/guards/auth-guard"
 import { AuthProvider } from "@/contexts/auth-context"
 
 export const metadata: Metadata = {
@@ -8,14 +9,16 @@ export const metadata: Metadata = {
   description: "Welcome to NoxaProxy Dashboard",
 }
 
-export default function RootLayout({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
   return (
     <AuthProvider>
-      {children}
+      <AuthGuard redirectTo="/auth">
+        {children}
+      </AuthGuard>
     </AuthProvider>
   )
 }
