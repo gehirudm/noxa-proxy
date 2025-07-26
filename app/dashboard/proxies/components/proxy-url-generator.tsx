@@ -1,9 +1,10 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Globe } from "lucide-react"
+import { ClipboardCopyIcon, Globe, Loader2 } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
+import { getProxySettings } from "@/app/actions/evomi-actions"
 
 type ProxyType = 'residential' | 'sharedDataCenter' | 'dataCenter' | 'dataCenterIPV6' | 'dataCenterIPV4' | 'mobile';
 
@@ -25,47 +26,141 @@ export function ProxyUrlGenerator({
     const [lifetime, setLifetime] = useState<string>("");
     const [httpProxy, setHttpProxy] = useState<string>("");
     const [socksProxy, setSocksProxy] = useState<string>("");
+    
+    // State for proxy settings
+    const [proxySettings, setProxySettings] = useState<any>(null);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    
+    // Available options from proxy settings
+    const [countries, setCountries] = useState<{value: string, label: string}[]>([]);
+    const [regions, setRegions] = useState<{value: string, label: string}[]>([]);
+    const [cities, setCities] = useState<{value: string, label: string}[]>([]);
+    const [isps, setIsps] = useState<{value: string, label: string}[]>([]);
 
     const { userData } = useAuth();
 
-    // This would typically come from an API
-    const countries = [
-        { value: "us", label: "United States" },
-        { value: "gb", label: "United Kingdom" },
-        { value: "ca", label: "Canada" },
-        { value: "au", label: "Australia" },
-        { value: "de", label: "Germany" },
-    ];
-
-    // These would be populated based on selected country
-    const regions = [
-        { value: "ny", label: "New York" },
-        { value: "ca", label: "California" },
-        { value: "tx", label: "Texas" },
-    ];
-
-    // These would be populated based on selected region
-    const cities = [
-        { value: "nyc", label: "New York City" },
-        { value: "la", label: "Los Angeles" },
-        { value: "chi", label: "Chicago" },
-    ];
-
-    // These would be populated based on selected country
-    const isps = [
-        { value: "comcast", label: "Comcast" },
-        { value: "att", label: "AT&T" },
-        { value: "verizon", label: "Verizon" },
-    ];
+    // Fetch proxy settings when proxy type changes
+        useEffect(() => {
+        async function fetchProxySettings() {
+            setLoading(true);
+            setError(null);
+            
+            try {
+                const result = await getProxySettings();
+                
+                if (result.success) {
+                    setProxySettings(result.data);
+                    
+                    // Reset selections when proxy type changes
+                    setCountry("");
+                    setRegion("");
+                    setCity("");
+                    setIsp("");
+                    
+                    // Get the settings for the current proxy type
+                    // @ts-ignore
+                    const typeSettings = result.data[proxyType];
+                    
+                    // Process countries if available
+                    if (typeSettings?.countries) {
+                        const countryOptions = Object.entries(typeSettings.countries).map(([code, name]) => ({
+                            value: code,
+                            label: name as string
+                        }));
+                        setCountries(countryOptions);
+                    } else {
+                        setCountries([]);
+                    }
+                    
+                    // Reset other options
+                    setRegions([]);
+                    setCities([]);
+                    setIsps([]);
+                } else {
+                    setError(result.error || "Failed to fetch proxy settings");
+                    setCountries([]);
+                    setRegions([]);
+                    setCities([]);
+                    setIsps([]);
+                }
+            } catch (err) {
+                setError("Failed to fetch proxy settings");
+                console.error(err);
+                setCountries([]);
+                setRegions([]);
+                setCities([]);
+                setIsps([]);
+            } finally {
+                setLoading(false);
+            }
+        }
+        
+        fetchProxySettings();
+    }, [proxyType]);
+    
+    // Update regions when country changes
+    useEffect(() => {
+        if (!country || !proxySettings?.regions?.data) {
+            setRegions([]);
+            return;
+        }
+        
+        const filteredRegions = proxySettings.regions.data
+            .filter((r: any) => r.country_code === country)
+            .map((r: any) => ({
+                value: r.id,
+                label: r.name
+            }));
+            
+        setRegions(filteredRegions);
+        setRegion(""); // Reset region selection
+    }, [country, proxySettings]);
+    
+    // Update cities when region changes
+    useEffect(() => {
+        if (!country || !proxySettings?.cities?.data) {
+            setCities([]);
+            return;
+        }
+        
+        const filteredCities = proxySettings.cities.data
+            .filter((c: any) => c.country_code === country && (!region || c.region_id === region))
+            .map((c: any) => ({
+                value: c.id,
+                label: c.name
+            }));
+            
+        setCities(filteredCities);
+        setCity(""); // Reset city selection
+    }, [country, region, proxySettings]);
+    
+    // Update ISPs when country changes
+    useEffect(() => {
+        if (!country || !proxySettings?.isp) {
+            setIsps([]);
+            return;
+        }
+        
+        const filteredIsps = Object.entries(proxySettings.isp)
+            .filter(([_, data]: [string, any]) => data.countryCode === country)
+            .map(([key, data]: [string, any]) => ({
+                value: key,
+                label: data.value
+            }));
+            
+        setIsps(filteredIsps);
+        setIsp(""); // Reset ISP selection
+    }, [country, proxySettings]);
 
     const handleGenerateProxyLinks = () => {
         // This would typically call an API to generate the links
         // For now, we'll just set some example values
-        const username = userData?.evomi?.username;
-        const password = userData?.evomi?.products[proxyType].proxy_key;
+        const username = userData?.evomi?.username || "username";
+        const password = userData?.evomi?.products?.[proxyType]?.proxy_key || "password";
 
         const endpoints: Record<ProxyType, { host: string; httpPort: number; socksPort: number }> = {
-            residential: { host: 'rp.evomi.com', httpPort: 1000, socksPort: 1002 },
+            residential: { host: 'proxies.noxaproxy.com', httpPort: 1000, socksPort: 1002 },
             sharedDataCenter: { host: 'shared-datacenter.evomi.com', httpPort: 2000, socksPort: 2002 },
             dataCenter: { host: 'dcp.evomi.com', httpPort: 2000, socksPort: 2002 },
             dataCenterIPV6: { host: 'datacenter-ipv6.evomi.com', httpPort: 2000, socksPort: 2002 },
@@ -128,9 +223,20 @@ export function ProxyUrlGenerator({
 
                             <div>
                                 <label className="text-sm font-medium text-foreground mb-2 block">Country</label>
-                                <Select onValueChange={setCountry}>
+                                <Select 
+                                    value={country} 
+                                    onValueChange={setCountry}
+                                    disabled={loading || countries.length === 0}
+                                >
                                     <SelectTrigger className="bg-background border-border text-foreground">
-                                        <SelectValue placeholder="Select country" />
+                                        {loading ? (
+                                            <div className="flex items-center">
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Loading...
+                                            </div>
+                                        ) : (
+                                            <SelectValue placeholder="Select country" />
+                                        )}
                                     </SelectTrigger>
                                     <SelectContent>
                                         {countries.map((country) => (
@@ -142,7 +248,11 @@ export function ProxyUrlGenerator({
 
                             <div>
                                 <label className="text-sm font-medium text-foreground mb-2 block">Region/State</label>
-                                <Select onValueChange={setRegion}>
+                                <Select 
+                                    value={region} 
+                                    onValueChange={setRegion}
+                                    disabled={!country || regions.length === 0}
+                                >
                                     <SelectTrigger className="bg-background border-border text-foreground">
                                         <SelectValue placeholder="Select region" />
                                     </SelectTrigger>
@@ -156,13 +266,17 @@ export function ProxyUrlGenerator({
 
                             <div>
                                 <label className="text-sm font-medium text-foreground mb-2 block">City</label>
-                                <Select onValueChange={setCity}>
+                                <Select 
+                                    value={city} 
+                                    onValueChange={setCity}
+                                    disabled={!country || cities.length === 0}
+                                >
                                     <SelectTrigger className="bg-background border-border text-foreground">
                                         <SelectValue placeholder="Select city" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {cities.map((city) => (
-                                            <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>
+                                                                                        <SelectItem key={city.value} value={city.value}>{city.label}</SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
@@ -170,7 +284,11 @@ export function ProxyUrlGenerator({
 
                             <div>
                                 <label className="text-sm font-medium text-foreground mb-2 block">ISP</label>
-                                <Select onValueChange={setIsp}>
+                                <Select 
+                                    value={isp} 
+                                    onValueChange={setIsp}
+                                    disabled={!country || isps.length === 0}
+                                >
                                     <SelectTrigger className="bg-background border-border text-foreground">
                                         <SelectValue placeholder="Select ISP" />
                                     </SelectTrigger>
@@ -205,12 +323,26 @@ export function ProxyUrlGenerator({
                             </div>
                         </div>
 
+                        {error && (
+                            <div className="p-3 bg-red-100 text-red-800 rounded-md text-sm">
+                                {error}
+                            </div>
+                        )}
+
                         <div className="pt-4">
                             <Button
                                 className="w-full bg-pink-600 hover:bg-pink-700 text-white"
                                 onClick={handleGenerateProxyLinks}
+                                disabled={loading || !userData?.evomi?.username}
                             >
-                                Generate Proxy Links
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Loading...
+                                    </>
+                                ) : (
+                                    "Generate Proxy Links"
+                                )}
                             </Button>
                         </div>
                     </CardContent>
@@ -230,15 +362,15 @@ export function ProxyUrlGenerator({
                                 <input
                                     type="text"
                                     readOnly
-                                    value={httpProxy || "http://username:password@rp.evomi.com:1000"}
+                                    value={httpProxy || "http://username:password@proxies.noxaproxy.com:1000"}
                                     className="w-full px-3 py-2 bg-background border border-border rounded-l-md text-foreground"
                                 />
                                 <Button
                                     variant="secondary"
                                     className="rounded-l-none bg-muted hover:bg-muted/80"
-                                    onClick={() => copyToClipboard(httpProxy || "http://username:password@rp.evomi.com:1000")}
+                                    onClick={() => copyToClipboard(httpProxy || "http://username:password@proxies.noxaproxy.com:1000")}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                                    <ClipboardCopyIcon className="w-4 h-4" />
                                 </Button>
                             </div>
                         </div>
@@ -249,15 +381,15 @@ export function ProxyUrlGenerator({
                                 <input
                                     type="text"
                                     readOnly
-                                    value={socksProxy || "socks5://username:password@rp.evomi.com:1002"}
+                                    value={socksProxy || "socks5://username:password@proxies.noxaproxy.com:1002"}
                                     className="w-full px-3 py-2 bg-background border border-border rounded-l-md text-foreground"
                                 />
                                 <Button
                                     variant="secondary"
                                     className="rounded-l-none bg-muted hover:bg-muted/80"
-                                    onClick={() => copyToClipboard(socksProxy || "socks5://username:password@rp.evomi.com:1002")}
+                                    onClick={() => copyToClipboard(socksProxy || "socks5://username:password@proxies.noxaproxy.com:1002")}
                                 >
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2" /><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" /></svg>
+                                    <ClipboardCopyIcon className="w-4 h-4" />
                                 </Button>
                             </div>
                         </div>

@@ -35,11 +35,11 @@ export function Sidebar() {
   ]
 
   const proxyItems = [
-    { icon: Shield, label: "Premium Residential", href: "/dashboard/proxies/premium-residential" },
+    // { icon: Shield, label: "Premium Residential", href: "/dashboard/proxies/premium-residential" },
     { icon: Wifi, label: "Static Residential", href: "/dashboard/proxies/static-residential" },
-    { icon: Smartphone, label: "Mobile Proxy", href: "/dashboard/proxies/mobile-proxy" },
-    { icon: Server, label: "Datacenter IPv4", href: "/dashboard/proxies/datacenter-ipv4" },
-    { icon: Network, label: "Datacenter IPv6", href: "/dashboard/proxies/datacenter-ipv6" },
+    // { icon: Smartphone, label: "Mobile Proxy", href: "/dashboard/proxies/mobile-proxy" },
+    // { icon: Server, label: "Datacenter IPv4", href: "/dashboard/proxies/datacenter-ipv4" },
+    // { icon: Network, label: "Datacenter IPv6", href: "/dashboard/proxies/datacenter-ipv6" },
   ]
 
   return (
