@@ -188,7 +188,7 @@ export default function HelpCenter() {
               Find answers, guides, and resources to get the most out of NoxaProxy
             </p>
 
-            {/* Search Bar */}
+            {/* Search Bar
             <div className="relative max-w-2xl mx-auto">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
@@ -198,7 +198,7 @@ export default function HelpCenter() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-4 py-6 text-lg glass-effect border-orange-200/30 dark:border-orange-500/30 rounded-xl focus:border-orange-500"
               />
-            </div>
+            </div> */}
 
             {/* Quick Links */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-12">
