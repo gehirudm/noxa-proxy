@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cryptomusProvider } from '@/lib/payment/providers/CryptomusPaymentProvider';
 import { 
   getPaymentByOrderId, 
   markPaymentCompleted, 
@@ -11,6 +10,7 @@ import {
 import { PaymentStatus } from '@/lib/payment/providers/PaymentProvider';
 import { db } from '@/lib/firebase/firebase-admin';
 import crypto from 'crypto';
+import { evomiAPI } from '@/lib/evomi-api';
 
 // IP whitelist for Cryptomus webhooks
 const CRYPTOMUS_IPS = ['91.227.144.54'];
@@ -173,27 +173,97 @@ export async function POST(request: NextRequest) {
         }
         
         // If this is a proxy purchase, provision the proxy (implementation depends on your system)
-        if (payment.type === 'proxy_purchase') {
-          // Implement proxy provisioning logic here
-          // This might involve calling an external API or updating user entitlements
-          console.log(`TODO: Provision proxy for user ${userId}, plan: ${JSON.stringify(payment.metadata)}`);
+                if (payment.type === 'proxy_purchase') {
+          // Implement proxy provisioning logic here using evomiAPI
+          console.log(`Provisioning proxy for user ${userId}, plan: ${JSON.stringify(payment.metadata)}`);
           
-          // Update the user's proxy plan information
+          // Update the user's proxy plan information in Firestore
           if (payment.metadata?.proxyType) {
             const userRef = db.collection('users').doc(userId);
-            await userRef.update({
-              [`proxyPlans.${payment.metadata.proxyType}`]: {
-                tier: payment.metadata.tier,
-                purchasedAt: new Date(),
-                expiresAt: payment.metadata.isRecurring 
-                  ? null // For subscriptions, we don't set an expiration
-                  : new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)), // 30 days for one-time purchases
-                isActive: true,
-                bandwidth: payment.metadata.bandwidth,
-                planName: payment.metadata.planName
-              },
-              updatedAt: new Date()
-            });
+            
+            // Get the user document to retrieve the Evomi username
+            const userDoc = await userRef.get();
+            const userData = userDoc.data();
+            
+            if (!userData?.evomi?.username) {
+              console.error(`No Evomi username found for user ${userId}`);
+              throw new Error('User does not have an Evomi account configured');
+            }
+            
+            const evomiUsername = userData.evomi.username;
+            
+            // Map our proxy types to Evomi product types
+            const proxyTypeToEvomiProduct: Record<string, 'residential' | 'sharedDataCenter' | 'mobile'> = {
+              'residential': 'residential',
+              'datacenter': 'sharedDataCenter',
+              'mobile': 'mobile',
+              'static_residential': 'residential' // Assuming static residential uses the same product
+            };
+            
+            const evomiProduct = proxyTypeToEvomiProduct[payment.metadata.proxyType];
+            
+            if (!evomiProduct) {
+              console.error(`Invalid proxy type: ${payment.metadata.proxyType}`);
+              throw new Error(`Invalid proxy type: ${payment.metadata.proxyType}`);
+            }
+            
+            // Parse bandwidth from string (e.g., "5 GB") to MB amount
+            let mbAmount = 0;
+            const bandwidthMatch = payment.metadata.bandwidth.match(/(\d+)\s*GB/i);
+            if (bandwidthMatch && bandwidthMatch[1]) {
+              // Convert GB to MB (1 GB = 1024 MB)
+              mbAmount = parseInt(bandwidthMatch[1], 10) * 1024;
+            } else {
+              console.error(`Invalid bandwidth format: ${payment.metadata.bandwidth}`);
+              throw new Error(`Invalid bandwidth format: ${payment.metadata.bandwidth}`);
+            }
+            
+            try {
+              // Add the bandwidth to the user's Evomi account
+              const updatedSubUser = await evomiAPI.giveBalance(
+                evomiUsername,
+                evomiProduct,
+                mbAmount
+              );
+              
+              console.log(`Successfully added ${mbAmount}MB to ${evomiUsername}'s ${evomiProduct} balance`);
+              
+              // Update the user's proxy plan information in Firestore
+              await userRef.update({
+                [`proxyPlans.${payment.metadata.proxyType}`]: {
+                  tier: payment.metadata.tier,
+                  purchasedAt: new Date(),
+                  expiresAt: payment.metadata.isRecurring 
+                    ? null // For subscriptions, we don't set an expiration
+                    : new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)), // 30 days for one-time purchases
+                  isActive: true,
+                  bandwidth: payment.metadata.bandwidth,
+                  planName: payment.metadata.planName,
+                  evomiBalance: updatedSubUser.products[evomiProduct]?.balance || mbAmount
+                },
+                updatedAt: new Date()
+              });
+            } catch (error) {
+              console.error(`Failed to add balance to Evomi account: ${error}`);
+              // Still update the user's plan in Firestore, but mark that provisioning failed
+              await userRef.update({
+                [`proxyPlans.${payment.metadata.proxyType}`]: {
+                  tier: payment.metadata.tier,
+                  purchasedAt: new Date(),
+                  expiresAt: payment.metadata.isRecurring 
+                    ? null 
+                    : new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)),
+                  isActive: true,
+                  bandwidth: payment.metadata.bandwidth,
+                  planName: payment.metadata.planName,
+                  provisioningError: error instanceof Error ? error.message : 'Unknown error'
+                },
+                updatedAt: new Date()
+              });
+              
+              // Re-throw the error to be caught by the outer try-catch
+              throw error;
+            }
           }
         }
         
