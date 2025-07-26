@@ -3,6 +3,8 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { AuthGuard } from "@/components/guards/auth-guard"
 import { AuthProvider } from "@/contexts/auth-context"
+import { Sidebar } from "./components/sidebar"
+import { Header } from "./components/header"
 
 export const metadata: Metadata = {
   title: "NoxaProxy Dashboard",
@@ -17,7 +19,17 @@ export default function DashboardLayout({
   return (
     <AuthProvider>
       <AuthGuard redirectTo="/auth">
-        {children}
+        <div className="min-h-screen bg-background text-foreground">
+          <div className="flex">
+            <Sidebar />
+            <div className="flex-1 transition-all duration-300 ease-in-out">
+              <Header />
+              <main className="p-6">
+                {children}
+              </main>
+            </div>
+          </div>
+        </div>
       </AuthGuard>
     </AuthProvider>
   )
