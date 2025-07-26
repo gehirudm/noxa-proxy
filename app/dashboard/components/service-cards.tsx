@@ -1,20 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Settings, RotateCcw, Shield } from "lucide-react"
+import Link from "next/link"
 
 export function ServiceCards() {
   const services = [
-    {
-      icon: RotateCcw,
-      title: "Rotating",
-      subtitle: "Residential",
-      gradient: "from-blue-500 to-cyan-500",
-      stats: [
-        { label: "Traffic Left", value: "0.00 GB" },
-        { label: "Orders", value: "0" },
-        { label: "Traffic Used", value: "0.00 GB" },
-      ],
-    },
+    // {
+    //   icon: RotateCcw,
+    //   title: "Rotating",
+    //   subtitle: "Residential",
+    //   gradient: "from-blue-500 to-cyan-500",
+    //   stats: [
+    //     { label: "Traffic Left", value: "0.00 GB" },
+    //     { label: "Orders", value: "0" },
+    //     { label: "Traffic Used", value: "0.00 GB" },
+    //   ],
+    // },
     {
       icon: Shield,
       title: "Static Residential",
@@ -25,6 +26,7 @@ export function ServiceCards() {
         { label: "Orders", value: "0" },
         { label: "Active IPs", value: "0" },
       ],
+      url: "/dashboard/proxies/static-residential",
     },
   ]
 
@@ -40,16 +42,22 @@ export function ServiceCards() {
               <div
                 className={`w-12 h-12 bg-gradient-to-r ${service.gradient} rounded-xl flex items-center justify-center shadow-lg`}
               >
-                <service.icon className="w-6 h-6 text-white" />
+                <div
+                  className={`w-12 h-12 bg-gradient-to-r ${service.gradient} rounded-xl flex items-center justify-center shadow-lg`}
+                >
+                  <service.icon className="w-6 h-6 text-white" />
+                </div>
               </div>
               <div>
                 <CardTitle className="text-foreground text-lg font-semibold">{service.title}</CardTitle>
                 {service.subtitle && <p className="text-muted-foreground text-sm font-medium">{service.subtitle}</p>}
               </div>
             </div>
-            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-              <Settings className="w-4 h-4" />
-            </Button>
+            <Link href={service.url} className="text-white">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Settings className="w-4 h-4" />
+              </Button>
+            </Link>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-3 gap-4">

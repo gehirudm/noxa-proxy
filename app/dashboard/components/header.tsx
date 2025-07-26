@@ -15,6 +15,8 @@ import Link from "next/link"
 import { useAuth } from "@/contexts/auth-context"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { WalletBalanceDisplay } from "./wallet-balance"
 
 export function Header() {
   const { theme, setTheme } = useTheme()
@@ -31,23 +33,13 @@ export function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2 bg-gradient-to-r from-emerald-50 to-green-50 dark:from-emerald-950 dark:to-green-950 px-4 py-2 rounded-lg border border-emerald-200 dark:border-emerald-800">
-            <CreditCard className="w-4 h-4 text-emerald-600" />
-            <span className="font-semibold text-emerald-700 dark:text-emerald-300">$0</span>
-          </div>
+          <WalletBalanceDisplay />
 
           {/* <Button variant="ghost" size="sm" className="p-2 hover:bg-muted/50">
             <Bell className="w-5 h-5" />
           </Button> */}
 
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="p-2 hover:bg-muted/50"
-          >
-            {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </Button>
+          <ThemeToggle />
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

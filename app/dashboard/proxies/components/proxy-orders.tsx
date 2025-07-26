@@ -2,6 +2,10 @@ import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Package, MoreHorizontal, RefreshCw } from "lucide-react"
+import { collection, query, where, orderBy, getDocs, limit, DocumentData, doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase/firebase"
+import { useAuth } from "@/contexts/auth-context"
+import { useToast } from "@/hooks/use-toast"
 
 interface Order {
   id: string;
@@ -20,53 +24,283 @@ export function ProxyOrders({ proxyType = "residential" }: ProxyOrdersProps) {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchOrders() {
+      if (!user) return;
+      
       setLoading(true);
       try {
-        // This would be an API call in a real application
-        // For now, we'll simulate a delay and return mock data
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Build query to fetch purchase transactions
+        let transactionsQuery = query(
+          collection(db, "users", user.uid, "transactions"),
+          where("type", "==", "purchase"),
+          orderBy("createdAt", "desc"),
+          limit(20) // Fetch more to filter by proxy type
+        );
+
+        const querySnapshot = await getDocs(transactionsQuery);
         
-        // Mock data based on proxy type
-        const mockOrders: Order[] = [
-          {
-            id: "ORD-12345",
-            date: "2023-10-15",
-            product: `${proxyType.charAt(0).toUpperCase() + proxyType.slice(1)} Proxy - Pro`,
-            amount: "$49.99",
-            status: "active",
-            renewalDate: "2023-11-15"
-          },
-          {
-            id: "ORD-12346",
-            date: "2023-09-01",
-            product: `${proxyType.charAt(0).toUpperCase() + proxyType.slice(1)} Proxy - Basic`,
-            amount: "$29.99",
-            status: "expired"
+        if (querySnapshot.empty) {
+          setOrders([]);
+          setError("No orders found");
+        } else {
+          // Process the fetched transactions
+          const fetchedOrders: Order[] = [];
+          
+          for (const transactionDoc of querySnapshot.docs) {
+            const transactionData = transactionDoc.data() as DocumentData;
+            const paymentId = transactionData.paymentId;
+            
+            if (!paymentId) continue;
+            
+            // Get the corresponding payment document to check proxy type
+            const paymentDocRef = doc(db, "users", user.uid, "payments", paymentId);
+            const paymentDoc = await getDoc(paymentDocRef);
+            
+            if (!paymentDoc.exists()) continue;
+            
+            const paymentData = paymentDoc.data();
+            
+            // Format the date
+            const createdAt = transactionData.createdAt?.toDate() || new Date();
+            const formattedDate = new Intl.DateTimeFormat('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).format(createdAt);
+            
+            // Format the amount
+            const formattedAmount = new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: transactionData.currency || 'USD'
+            }).format(transactionData.amount);
+            
+            // Determine the status based on payment data
+            let status: "active" | "expired" | "pending";
+            if (paymentData.status === "completed") {
+              // Check if the subscription is still active based on createdAt + plan duration
+              const now = new Date();
+              const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+              
+              // If it's a recurring subscription, check if it's still active
+              if (paymentData.metadata?.isRecurring) {
+                status = paymentData.metadata?.isActive !== false ? "active" : "expired";
+              } else {
+                // For one-time purchases, check if it's within the 30-day period
+                status = (now.getTime() - createdAt.getTime() < thirtyDaysInMs) ? "active" : "expired";
+              }
+            } else if (paymentData.status === "pending") {
+              status = "pending";
+            } else {
+              status = "expired";
+            }
+            
+            // Calculate renewal date if active
+            let renewalDate;
+            if (status === "active") {
+              if (paymentData.metadata?.nextRenewalAt) {
+                // Use the next renewal date if available (for subscriptions)
+                const nextRenewalDate = new Date(paymentData.metadata.nextRenewalAt);
+                renewalDate = new Intl.DateTimeFormat('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+                }).format(nextRenewalDate);
+              } else {
+                // Calculate based on purchase date for one-time purchases
+                const renewalDateObj = new Date(createdAt);
+                renewalDateObj.setDate(renewalDateObj.getDate() + 30); // Assuming 30-day plans
+                renewalDate = new Intl.DateTimeFormat('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+                }).format(renewalDateObj);
+              }
+            }
+            
+            // Get plan tier from payment metadata
+            const planTier = paymentData.metadata?.tier || 'Standard';
+            
+            // Create the order object
+            const order: Order = {
+              id: paymentId,
+              date: formattedDate,
+              product: `${proxyType.charAt(0).toUpperCase() + proxyType.slice(1)} Proxy - ${planTier.charAt(0).toUpperCase() + planTier.slice(1)}`,
+              amount: formattedAmount,
+              status: status,
+              renewalDate: renewalDate
+            };
+            
+            fetchedOrders.push(order);
           }
-        ];
-        
-        setOrders(mockOrders);
-        setError(null);
+          
+          setOrders(fetchedOrders);
+          if (fetchedOrders.length === 0) {
+            setError("No orders found for this proxy type");
+          } else {
+            setError(null);
+          }
+        }
       } catch (err) {
         setError("Failed to fetch orders");
         console.error(err);
+        toast({
+          title: "Error",
+          description: "Failed to load order history. Please try again.",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
     }
 
     fetchOrders();
-  }, [proxyType]);
+  }, [proxyType, user]);
 
   const refreshOrders = () => {
     setLoading(true);
-    // This would be an API call in a real application
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    // Fetch orders again
+    async function refetchOrders() {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        // Build query to fetch purchase transactions
+        let transactionsQuery = query(
+          collection(db, "users", user.uid, "transactions"),
+          where("type", "==", "purchase"),
+          orderBy("createdAt", "desc"),
+          limit(20) // Fetch more to filter by proxy type
+        );
+
+        const querySnapshot = await getDocs(transactionsQuery);
+        
+        if (querySnapshot.empty) {
+          setOrders([]);
+          setError("No orders found");
+        } else {
+          // Process the fetched transactions
+          const fetchedOrders: Order[] = [];
+          
+          for (const transactionDoc of querySnapshot.docs) {
+            const transactionData = transactionDoc.data() as DocumentData;
+            const paymentId = transactionData.paymentId;
+            
+            if (!paymentId) continue;
+            
+            // Get the corresponding payment document to check proxy type
+            const paymentDocRef = doc(db, "users", user.uid, "payments", paymentId);
+            const paymentDoc = await getDoc(paymentDocRef);
+            
+            if (!paymentDoc.exists()) continue;
+            
+            const paymentData = paymentDoc.data();
+            
+            // Check if this payment is for the requested proxy type
+            if (paymentData.type !== "proxy_purchase" || 
+                paymentData.metadata?.proxyType !== proxyType) {
+              continue;
+            }
+            
+            // Format the date
+            const createdAt = transactionData.createdAt?.toDate() || new Date();
+            const formattedDate = new Intl.DateTimeFormat('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit'
+            }).format(createdAt);
+            
+            // Format the amount
+            const formattedAmount = new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: transactionData.currency || 'USD'
+            }).format(transactionData.amount);
+            
+            // Determine the status based on payment data
+            let status: "active" | "expired" | "pending";
+            if (paymentData.status === "completed") {
+              // Check if the subscription is still active based on createdAt + plan duration
+              const now = new Date();
+              const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+              
+              // If it's a recurring subscription, check if it's still active
+              if (paymentData.metadata?.isRecurring) {
+                status = paymentData.metadata?.isActive !== false ? "active" : "expired";
+              } else {
+                // For one-time purchases, check if it's within the 30-day period
+                status = (now.getTime() - createdAt.getTime() < thirtyDaysInMs) ? "active" : "expired";
+              }
+            } else if (paymentData.status === "pending") {
+              status = "pending";
+            } else {
+              status = "expired";
+            }
+            
+            // Calculate renewal date if active
+            let renewalDate;
+            if (status === "active") {
+              if (paymentData.metadata?.nextRenewalAt) {
+                // Use the next renewal date if available (for subscriptions)
+                const nextRenewalDate = new Date(paymentData.metadata.nextRenewalAt);
+                renewalDate = new Intl.DateTimeFormat('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+                }).format(nextRenewalDate);
+              } else {
+                // Calculate based on purchase date for one-time purchases
+                const renewalDateObj = new Date(createdAt);
+                renewalDateObj.setDate(renewalDateObj.getDate() + 30); // Assuming 30-day plans
+                renewalDate = new Intl.DateTimeFormat('en-US', {
+                  year: 'numeric',
+                  month: '2-digit',
+                  day: '2-digit'
+                }).format(renewalDateObj);
+              }
+            }
+            
+            // Get plan tier from payment metadata
+            const planTier = paymentData.metadata?.tier || 'Standard';
+            
+            // Create the order object
+            const order: Order = {
+              id: paymentId,
+              date: formattedDate,
+              product: `${proxyType.charAt(0).toUpperCase() + proxyType.slice(1)} Proxy - ${planTier.charAt(0).toUpperCase() + planTier.slice(1)}`,
+              amount: formattedAmount,
+              status: status,
+              renewalDate: renewalDate
+            };
+            
+            fetchedOrders.push(order);
+          }
+          
+                    setOrders(fetchedOrders);
+          if (fetchedOrders.length === 0) {
+            setError("No orders found for this proxy type");
+          } else {
+            setError(null);
+          }
+        }
+      } catch (err) {
+        setError("Failed to refresh orders");
+        console.error(err);
+        toast({
+          title: "Error",
+          description: "Failed to refresh order history. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    refetchOrders();
   };
 
   const getStatusBadgeClass = (status: string) => {

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { getUserProxyUsage, getUserSubscriptions } from "@/app/actions/user-actions";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Link } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
 interface UsageDataPoint {
   timestamp: string;
@@ -24,16 +25,19 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
   const [totalUsage, setTotalUsage] = useState(0);
   const [availableTraffic, setAvailableTraffic] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  
+
+  const router = useRouter();
+  const pathname = usePathname();
+
   const timeRanges = ["1D", "7D", "1M"];
-  
+
   // Map time ranges to API duration parameters
   const timeRangeToDuration: Record<string, string> = {
     "1D": "24h",
     "7D": "7d",
     "1M": "30d"
   };
-  
+
   // Map time ranges to API granularity parameters
   const timeRangeToGranularity: Record<string, string> = {
     "1D": "hour",
@@ -55,27 +59,27 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
     async function fetchData() {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // Fetch usage history
         const duration = timeRangeToDuration[activeTimeRange];
         const granularity = timeRangeToGranularity[activeTimeRange];
-        
+
         const usageResponse = await getUserProxyUsage(duration, granularity);
-        
+
         if (!usageResponse.success) {
           throw new Error(usageResponse.error || "Failed to fetch usage data");
         }
-        
+
         // Transform the API response to match our component's expected format
         // The UsageHistory interface shows that data.products is an array of ProductUsage objects
         const apiProductType = mapProxyType(proxyType);
-        
+
         // Find the product that matches our proxy type
         const productData = usageResponse.data?.products.find(
           (product) => product.name.toLowerCase() === apiProductType.toLowerCase()
         );
-        
+
         if (!productData) {
           setUsageData([]);
           setTotalUsage(0);
@@ -88,22 +92,22 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
             download: value,
             upload: 0
           }));
-          
+
           setUsageData(mappedData);
-          
+
           // Set total usage from the API response
           setTotalUsage(productData.totalBandwidth);
         }
-        
+
         // Fetch subscription data to get available traffic
         const subscriptionsResponse = await getUserSubscriptions();
-        
+
         if (subscriptionsResponse.success) {
           const mappedType = mapProxyType(proxyType);
           const subscription = subscriptionsResponse.data?.find(
             (sub: any) => sub.type === mappedType
           );
-          
+
           if (subscription) {
             setAvailableTraffic(subscription.availableBalance * 1024 * 1024 * 1024); // Convert GB to bytes
           }
@@ -115,7 +119,7 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
         setIsLoading(false);
       }
     }
-    
+
     fetchData();
   }, [proxyType, activeTimeRange]);
 
@@ -148,6 +152,12 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
     return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + " " + sizes[i];
   };
 
+  // Handle purchase traffic button click
+  const handlePurchaseTraffic = () => {
+    // Navigate to the plans tab by adding ?tab=plans to the URL
+    router.push(`${pathname}?tab=plans`);
+  };
+
   return (
     <div className="space-y-4">
       {/* Traffic Left Card */}
@@ -167,7 +177,11 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
             <span className="text-foreground">Auto Topup</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
           </div>
-          <Button className="w-full bg-muted hover:bg-muted/80 text-foreground" variant="secondary">
+          <Button 
+            className="w-full bg-muted hover:bg-muted/80 text-foreground" 
+            variant="secondary"
+            onClick={handlePurchaseTraffic}
+          >
             Purchase Traffic
           </Button>
         </CardContent>
@@ -220,41 +234,41 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
                 >
                   <defs>
                     <linearGradient id="colorDownload" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1}/>
+                      <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#8884d8" stopOpacity={0.1} />
                     </linearGradient>
                     <linearGradient id="colorUpload" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.8}/>
-                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0.1}/>
+                      <stop offset="5%" stopColor="#ec4899" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#ec4899" stopOpacity={0.1} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                   <XAxis dataKey="timestamp" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: '#1f2937', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1f2937',
                       borderColor: '#374151',
                       color: '#f9fafb'
                     }}
                     labelStyle={{ color: '#f9fafb' }}
                     formatter={(value) => [`${formatBytes(value as number)}`, undefined]}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="download" 
-                    name="Download" 
-                    stroke="#8884d8" 
-                    fillOpacity={1} 
-                    fill="url(#colorDownload)" 
+                  <Area
+                    type="monotone"
+                    dataKey="download"
+                    name="Download"
+                    stroke="#8884d8"
+                    fillOpacity={1}
+                    fill="url(#colorDownload)"
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="upload" 
-                    name="Upload" 
-                    stroke="#ec4899" 
-                    fillOpacity={1} 
-                    fill="url(#colorUpload)" 
+                  <Area
+                    type="monotone"
+                    dataKey="upload"
+                    name="Upload"
+                    stroke="#ec4899"
+                    fillOpacity={1}
+                    fill="url(#colorUpload)"
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -264,7 +278,7 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
               <div className="text-muted-foreground text-sm">No usage data available</div>
             </div>
           )}
-          
+
           {!isLoading && !error && chartData.length === 0 && (
             <div className="flex justify-between text-xs text-muted-foreground mt-2">
               {timeLabels.map((label, index) => (

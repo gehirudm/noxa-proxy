@@ -157,6 +157,7 @@ export async function getEvomiSubUser() {
   }
 }
 
+
 /**
  * Fetches a user's current proxy subscriptions and usage data
  * @returns Object containing success status and either the subscriptions data or an error message
@@ -181,10 +182,6 @@ export async function getUserSubscriptions() {
       }
     }
 
-    // Fetch the user's proxy subscriptions from Firestore
-    const userProxiesRef = db.collection('users').doc(userId).collection('proxies')
-    const proxiesSnapshot = await userProxiesRef.get()
-
     // Get subuser details from Evomi API to get current available balance
     const subUserResponse = await evomiAPI.getSubUser(username)
     if (!subUserResponse) {
@@ -194,103 +191,98 @@ export async function getUserSubscriptions() {
       }
     }
 
-    // Map proxy types to their respective balance fields in the Evomi API response
-    const proxyTypeToBalanceMap = {
+    // Get the user document to access proxyPlans
+    const userDoc = await db.collection('users').doc(userId).get()
+    if (!userDoc.exists) {
+      return {
+        success: false,
+        error: "User document not found"
+      }
+    }
+
+    const userData = userDoc.data()
+    const proxyPlans = userData?.proxyPlans || {}
+
+    // Map proxy types to their respective display names and Evomi product keys
+    const proxyTypeConfig = {
       'residential': {
-        balanceField: 'rpBalance',
-        displayName: 'Residential Proxies'
+        displayName: 'Residential Proxies',
+        evomiProduct: 'residential' as keyof SubUser['products']
       },
       'datacenter': {
-        balanceField: 'sdcBalance',
-        displayName: 'Datacenter Proxies'
+        displayName: 'Datacenter Proxies',
+        evomiProduct: 'sharedDataCenter' as keyof SubUser['products']
       },
       'mobile': {
-        balanceField: 'mobileBalance',
-        displayName: 'Mobile Proxies'
+        displayName: 'Mobile Proxies',
+        evomiProduct: 'mobile' as keyof SubUser['products']
       },
       'static_residential': {
-        balanceField: 'staticResidentialBalance', // This might need adjustment based on actual API response
-        displayName: 'Static Residential Proxies'
+        displayName: 'Static Residential Proxies',
+        evomiProduct: 'residential' as keyof SubUser['products']
       }
     }
 
-    // Create a map of proxy types to their subscription data
-    const subscriptionsMap = new Map<keyof typeof proxyTypeToBalanceMap, SubscriptionData>()
+    // Create subscription data from the proxyPlans in the user document
+    const subscriptions: SubscriptionData[] = []
 
-    // First, process the Firestore data to get total purchased bandwidth
-    proxiesSnapshot.docs.forEach(doc => {
-      const subscription = doc.data()
-      const proxyType = subscription.type as keyof typeof proxyTypeToBalanceMap
+    for (const [proxyType, planData] of Object.entries(proxyPlans)) {
+      if (!planData || !planData.isActive) continue
 
-      if (!subscriptionsMap.has(proxyType)) {
-        subscriptionsMap.set(proxyType, {
-          type: proxyType,
-          displayName: proxyTypeToBalanceMap[proxyType]?.displayName || proxyType,
-          planName: subscription.planName,
-          isRecurring: subscription.isRecurring,
-          totalBandwidth: subscription.bandwidth,
-          status: subscription.status || 'active',
-          expiresAt: subscription.expiresAt ? subscription.expiresAt.toDate() : null,
-          lastPaymentDate: subscription.lastPaymentDate ? subscription.lastPaymentDate.toDate() : null,
-          // These will be filled in later
-          availableBalance: 0,
-          usedBandwidth: '0 GB',
-          usagePercentage: 0
-        })
-      }
-    })
+      const config = proxyTypeConfig[proxyType as keyof typeof proxyTypeConfig]
+      if (!config) continue
 
-    // Now, add the current available balance from the Evomi API
-    for (const [proxyType, subscriptionData] of subscriptionsMap.entries()) {
-      const balanceField = proxyTypeToBalanceMap[proxyType]?.balanceField
+      const evomiProduct = config.evomiProduct
+      const productBalance = subUserResponse.products[evomiProduct]?.balance || 0
 
-      // Map proxy types to their corresponding product keys in the SubUser interface
-      const productMapping: Record<string, keyof SubUser['products']> = {
-        'residential': 'residential',
-        'datacenter': 'sharedDataCenter',
-        'mobile': 'mobile',
-        'static_residential': 'residential' // Assuming static residential uses the same product
+      // Convert MB to GB for display
+      const availableBalanceGB = (productBalance / 1024)
+      
+      // Parse total bandwidth to calculate usage
+      const totalBandwidthMatch = planData.bandwidth.match(/(\d+)\s*GB/)
+      let totalBandwidthGB = 0
+      let usedBandwidthGB = 0
+      let usagePercentage = 0
+      
+      if (totalBandwidthMatch && totalBandwidthMatch[1]) {
+        totalBandwidthGB = parseFloat(totalBandwidthMatch[1])
+        usedBandwidthGB = Math.max(0, totalBandwidthGB - availableBalanceGB)
+        usagePercentage = Math.min(100, Math.round((usedBandwidthGB / totalBandwidthGB) * 100))
       }
 
-      const productKey = productMapping[proxyType]
-
-      if (productKey && subUserResponse.products[productKey]) {
-        // Get balance from the correct product in the SubUser response
-        const productBalance = subUserResponse.products[productKey]?.balance || 0
-
-        // Convert MB to GB for display
-        const availableBalanceGB = (productBalance / 1024)
-        subscriptionData.availableBalance = availableBalanceGB
-
-        // Parse total bandwidth to calculate usage
-        const totalBandwidthMatch = subscriptionData.totalBandwidth.match(/(\d+)\s*GB/)
-        if (totalBandwidthMatch && totalBandwidthMatch[1]) {
-          const totalBandwidthGB = parseFloat(totalBandwidthMatch[1])
-          const usedBandwidthGB = Math.max(0, totalBandwidthGB - availableBalanceGB)
-
-          subscriptionData.usedBandwidth = `${usedBandwidthGB.toFixed(2)} GB`
-          subscriptionData.usagePercentage = Math.min(100, Math.round((usedBandwidthGB / totalBandwidthGB) * 100))
-        }
-      }
-
-      // Calculate days remaining if there's an expiration date
-      if (subscriptionData.expiresAt) {
+      // Determine subscription status
+      let status = 'active'
+      let daysRemaining: number | undefined = undefined
+      
+      if (planData.expiresAt) {
+        const expiresAt = planData.expiresAt.toDate ? planData.expiresAt.toDate() : new Date(planData.expiresAt)
         const now = new Date()
-        const diffTime = subscriptionData.expiresAt.getTime() - now.getTime()
-        const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-        subscriptionData.daysRemaining = daysRemaining
+        const diffTime = expiresAt.getTime() - now.getTime()
+        daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
         if (daysRemaining <= 0) {
-          subscriptionData.status = 'expired'
+          status = 'expired'
         } else if (daysRemaining <= 3) {
-          subscriptionData.status = 'expiring-soon'
+          status = 'expiring-soon'
         }
       }
-    }
 
-    // Convert the map to an array for the response
-    const subscriptions = Array.from(subscriptionsMap.values())
+      // Create the subscription data object
+      subscriptions.push({
+        type: proxyType,
+        displayName: config.displayName,
+        planName: planData.planName || `${proxyType.charAt(0).toUpperCase() + proxyType.slice(1)} Plan`,
+        isRecurring: !!planData.isRecurring,
+        totalBandwidth: planData.bandwidth,
+        status: planData.refundedAt ? 'refunded' : status,
+        expiresAt: planData.expiresAt ? (planData.expiresAt.toDate ? planData.expiresAt.toDate() : new Date(planData.expiresAt)) : null,
+        lastPaymentDate: planData.purchasedAt ? (planData.purchasedAt.toDate ? planData.purchasedAt.toDate() : new Date(planData.purchasedAt)) : null,
+        availableBalance: availableBalanceGB,
+        usedBandwidth: `${usedBandwidthGB.toFixed(2)} GB`,
+        usagePercentage: usagePercentage,
+        daysRemaining: daysRemaining
+      })
+    }
 
     return {
       success: true,
@@ -330,7 +322,7 @@ export async function updateUserProfile(profileData: {
 
     // Get the user document reference
     const userDocRef = db.collection("users").doc(userId);
-    
+
     // Get current user data to preserve existing fields
     const userDoc = await userDocRef.get();
     if (!userDoc.exists) {

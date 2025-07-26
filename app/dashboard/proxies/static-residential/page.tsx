@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useSearchParams } from "next/navigation"
+import { useQueryState } from "nuqs"
 import { Button } from "@/components/ui/button"
 import { Header } from "../../components/header"
 import { Sidebar } from "../../components/sidebar"
@@ -10,7 +11,16 @@ import { ProxyUrlGenerator } from "../components/proxy-url-generator"
 import { ProxyUsage } from "../components/proxy-usage"
 
 export default function StaticResidentialPage() {
-  const [activeTab, setActiveTab] = useState("overview")
+  // Use nuqs for tab state management
+  const [activeTab, setActiveTab] = useQueryState("tab", {
+    defaultValue: "overview",
+    parse: (value) => {
+      // Validate that the value is one of our allowed tabs
+      const validTabs = ["overview", "generator", "plans"];
+      return validTabs.includes(value) ? value : "overview";
+    },
+    serialize: (value) => value,
+  });
 
   const tabs = [
     { id: "overview", label: "Overview" },
