@@ -307,7 +307,7 @@ async function triggerCryptomusTestWebhook(
 ): Promise<boolean> {
   try {
     const merchantId = process.env.CRYPTOMUS_MERCHANT_ID;
-    const apiKey = process.env.CRYPTOMUS_API_KEY;
+    const apiKey = process.env.CRYPTOMUS_PAYMENT_KEY;
     
     if (!merchantId || !apiKey) {
       throw new Error('Cryptomus credentials not configured');
@@ -322,6 +322,8 @@ async function triggerCryptomusTestWebhook(
       url_callback: callbackUrl,
       status
     };
+
+    console.log(payload)
 
     const signature = generateCryptomusSignature(payload, apiKey);
 
