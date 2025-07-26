@@ -313,7 +313,8 @@ async function triggerCryptomusTestWebhook(
       throw new Error('Cryptomus credentials not configured');
     }
 
-    callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}${callbackUrl}`;
+    // callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}${callbackUrl}`;
+    callbackUrl = `https://3f686b229f55.ngrok-free.app${callbackUrl}`;
     
     const payload = {
       order_id: orderId,

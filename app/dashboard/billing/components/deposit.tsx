@@ -1,28 +1,69 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CreditCard, Plus } from "lucide-react"
+import { CreditCard, Plus, RefreshCw } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { handleWalletDeposit } from "@/app/actions/payment-actions"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useAuth } from "@/contexts/auth-context"
+import { doc, getDoc } from "firebase/firestore"
+import { db } from "@/lib/firebase/firebase"
 
 interface WalletBalanceCardProps {
   balance?: number
   onBalanceUpdate?: () => void
 }
 
-export function WalletBalanceCard({ balance = 0, onBalanceUpdate }: WalletBalanceCardProps) {
+export function WalletBalanceCard({ balance: initialBalance, onBalanceUpdate }: WalletBalanceCardProps) {
   const [isDepositDialogOpen, setIsDepositDialogOpen] = useState(false)
   const [depositAmount, setDepositAmount] = useState("")
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentProvider, setPaymentProvider] = useState<"stripe" | "cryptomus">("stripe")
   const [cryptoNetwork, setCryptoNetwork] = useState("ETH")
+  const [balance, setBalance] = useState(initialBalance || 0)
+  const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  const { user } = useAuth()
+
+  const fetchWalletBalance = async () => {
+    if (!user) return
+
+    try {
+      setIsLoading(true)
+      const userDocRef = doc(db, "users", user.uid)
+      const userDoc = await getDoc(userDocRef)
+      
+      if (userDoc.exists()) {
+        const userData = userDoc.data()
+        const walletBalance = userData.walletBalance || 0
+        setBalance(walletBalance)
+        
+        // Call the parent's onBalanceUpdate if provided
+        if (onBalanceUpdate) {
+          onBalanceUpdate()
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching wallet balance:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch your wallet balance. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Fetch balance on component mount
+  useEffect(() => {
+    fetchWalletBalance()
+  }, [user])
 
   const handleDeposit = async () => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) return
@@ -57,10 +98,8 @@ export function WalletBalanceCard({ balance = 0, onBalanceUpdate }: WalletBalanc
           variant: "default",
         })
         
-        // Refresh balance if callback provided
-        if (onBalanceUpdate) {
-          onBalanceUpdate()
-        }
+        // Refresh balance
+        fetchWalletBalance()
       } else {
         // Show error toast
         toast({
@@ -84,14 +123,26 @@ export function WalletBalanceCard({ balance = 0, onBalanceUpdate }: WalletBalanc
   return (
     <>
       <Card className="bg-card border-border">
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-foreground text-sm font-medium">Wallet balance</CardTitle>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={fetchWalletBalance}
+            disabled={isLoading}
+            className="h-8 w-8 p-0"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <span className="sr-only">Refresh balance</span>
+          </Button>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <CreditCard className="w-5 h-5 text-pink-500" />
-              <span className="text-2xl font-bold text-foreground">${balance.toFixed(2)}</span>
+              <span className="text-2xl font-bold text-foreground">
+                ${isLoading ? "..." : balance.toFixed(2)}
+              </span>
             </div>
           </div>
           <Button 

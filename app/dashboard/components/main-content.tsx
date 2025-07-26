@@ -8,8 +8,8 @@ export function MainContent() {
     <main className="p-6 space-y-6 bg-background">
       <PromoBanner />
       <ActiveSubscriptions />
-      <UsageCharts />
-      <ServiceCards />
+      {/* <UsageCharts /> */}
+      {/* <ServiceCards /> */}
     </main>
   )
 }
