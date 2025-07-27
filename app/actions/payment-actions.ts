@@ -9,7 +9,8 @@ import {
     createTransactionRecord,
     generateOrderId,
     markPaymentCompleted,
-    updatePaymentWithCryptoDetails} from "@/lib/db/payments"
+    updatePaymentWithCryptoDetails
+} from "@/lib/db/payments"
 import { PaymentType as ProviderPaymentType } from "@/lib/payment/providers/PaymentProvider"
 import crypto from 'crypto'
 import { db } from "@/lib/firebase/firebase-admin"
@@ -66,7 +67,7 @@ export const handleProxyPlanPurchase = withAuthGuard(async (authUser: AuthUser, 
     let planPrice;
     let planName;
     let planBandwidth;
-    
+
     if (tier === "custom") {
         // Validate custom quantity
         if (!customQuantity || customQuantity <= 0) {
@@ -75,7 +76,7 @@ export const handleProxyPlanPurchase = withAuthGuard(async (authUser: AuthUser, 
                 error: "Invalid bandwidth quantity"
             }
         }
-        
+
         // Calculate price for custom bandwidth (example: $0.50 per GB)
         const pricePerGB = 2.75; // $0.50 per GB - adjust as needed
         planPrice = Math.round(customQuantity * pricePerGB * 100); // Convert to cents
@@ -218,7 +219,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
     let planPrice;
     let planName;
     let planBandwidth;
-    
+
     if (tier === "custom") {
         // Validate custom quantity
         if (!customQuantity || customQuantity <= 0) {
@@ -227,7 +228,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
                 error: "Invalid bandwidth quantity"
             }
         }
-        
+
         // Calculate price for custom bandwidth (example: $0.50 per GB)
         const pricePerGB = 2.75; // $0.50 per GB - adjust as needed
         planPrice = Math.round(customQuantity * pricePerGB * 100); // Convert to cents
@@ -254,17 +255,17 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
         // Get user's wallet balance
         const userDoc = await db.collection('users').doc(authUser.uid).get();
         const userData = userDoc.data();
-        
+
         if (!userData) {
             return {
                 success: false,
                 error: "User data not found"
             };
         }
-        
+
         const walletBalance = userData.walletBalance || 0;
         const amountInDollars = planPrice / 100; // Convert cents to dollars
-        
+
         // Check if user has sufficient balance
         if (walletBalance < amountInDollars) {
             return {
@@ -272,7 +273,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
                 error: `Insufficient wallet balance. Required: $${amountInDollars.toFixed(2)}, Available: $${walletBalance.toFixed(2)}`
             };
         }
-        
+
         // Create payment record
         await createPayment({
             orderId,
@@ -290,14 +291,14 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
                 customQuantity: tier === "custom" ? customQuantity : undefined
             }
         });
-        
+
         // Deduct amount from wallet balance
         const newBalance = walletBalance - amountInDollars;
         await db.collection('users').doc(authUser.uid).update({
             'walletBalance': newBalance,
             'wallet.updatedAt': new Date()
         });
-        
+
         // Create transaction record
         await createTransactionRecord({
             userId: authUser.uid,
@@ -306,21 +307,26 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
             currency: 'USD',
             paymentId: orderId,
             paymentProvider: 'wallet',
-            description: `Wallet payment for ${planName}`
+            description: `Wallet payment for ${planName}`,
+            metadata: {
+                rawData: {
+                    status: "paid"
+                }
+            }
         });
-        
+
         // Mark payment as completed
         await markPaymentCompleted(authUser.uid, orderId);
-        
+
         // Provision the proxy
         // Get the user document to retrieve the Evomi username
         if (!userData.evomi?.username) {
             console.error(`No Evomi username found for user ${authUser.uid}`);
             throw new Error('User does not have an Evomi account configured');
         }
-        
+
         const evomiUsername = userData.evomi.username;
-        
+
         // Map our proxy types to Evomi product types
         const proxyTypeToEvomiProduct: Record<string, 'residential' | 'sharedDataCenter' | 'mobile'> = {
             'premium_residential': 'residential',
@@ -329,14 +335,14 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
             'datacenter_ipv6': 'sharedDataCenter',
             'mobile_proxy': 'mobile'
         };
-        
+
         const evomiProduct = proxyTypeToEvomiProduct[proxyType];
-        
+
         if (!evomiProduct) {
             console.error(`Invalid proxy type: ${proxyType}`);
             throw new Error(`Invalid proxy type: ${proxyType}`);
         }
-        
+
         // Parse bandwidth from string (e.g., "5 GB") to MB amount
         let mbAmount = 0;
         const bandwidthMatch = planBandwidth.match(/(\d+)\s*GB/i);
@@ -347,7 +353,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
             console.error(`Invalid bandwidth format: ${planBandwidth}`);
             throw new Error(`Invalid bandwidth format: ${planBandwidth}`);
         }
-        
+
         try {
             // Add the bandwidth to the user's Evomi account
             const updatedSubUser = await evomiAPI.giveBalance(
@@ -355,9 +361,9 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
                 evomiProduct,
                 mbAmount
             );
-            
+
             console.log(`Successfully added ${mbAmount}MB to ${evomiUsername}'s ${evomiProduct} balance`);
-            
+
             // Update the user's proxy plan information in Firestore
             await db.collection('users').doc(authUser.uid).update({
                 [`proxyPlans.${proxyType}`]: {
@@ -371,7 +377,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
                 },
                 updatedAt: new Date()
             });
-            
+
             return {
                 success: true,
                 message: "Payment successful and proxy provisioned",
@@ -379,7 +385,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
             };
         } catch (error) {
             console.error(`Failed to add balance to Evomi account: ${error}`);
-            
+
             // Still update the user's plan in Firestore, but mark that provisioning failed
             await db.collection('users').doc(authUser.uid).update({
                 [`proxyPlans.${proxyType}`]: {
@@ -393,7 +399,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
                 },
                 updatedAt: new Date()
             });
-            
+
             return {
                 success: false,
                 error: `Payment successful but failed to provision proxy: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -402,7 +408,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
         }
     } catch (error) {
         console.error("Wallet payment processing error:", error);
-        
+
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown payment processing error"
@@ -532,155 +538,155 @@ export const handleWalletDeposit = withAuthGuard(async (authUser: AuthUser, {
  * Interface for test webhook response
  */
 interface TestWebhookResponse {
-  success: boolean
-  message?: string
-  error?: string
-  orderId?: string
+    success: boolean
+    message?: string
+    error?: string
+    orderId?: string
 }
 
 /**
  * Generate Cryptomus signature for API requests
  */
 function generateCryptomusSignature(payload: any, apiKey: string): string {
-  const sortedParams = JSON.stringify(payload);
-  return crypto
-    .createHash('md5')
-    .update(Buffer.from(sortedParams).toString('base64') + apiKey)
-    .digest('hex');
+    const sortedParams = JSON.stringify(payload);
+    return crypto
+        .createHash('md5')
+        .update(Buffer.from(sortedParams).toString('base64') + apiKey)
+        .digest('hex');
 }
 
 /**
  * Trigger a test webhook for an existing payment
  */
 async function triggerCryptomusTestWebhook(
-  orderId: string,
-  status: 'paid' | 'fail' | 'cancel' = 'paid',
-  currency = 'USDT',
-  network = 'TRX',
-  callbackUrl = "/api/payments/callback/proxy"
+    orderId: string,
+    status: 'paid' | 'fail' | 'cancel' = 'paid',
+    currency = 'USDT',
+    network = 'TRX',
+    callbackUrl = "/api/payments/callback/proxy"
 ): Promise<boolean> {
-  try {
-    const merchantId = process.env.CRYPTOMUS_MERCHANT_ID;
-    const apiKey = process.env.CRYPTOMUS_PAYMENT_KEY;
-    
-    if (!merchantId || !apiKey) {
-      throw new Error('Cryptomus credentials not configured');
+    try {
+        const merchantId = process.env.CRYPTOMUS_MERCHANT_ID;
+        const apiKey = process.env.CRYPTOMUS_PAYMENT_KEY;
+
+        if (!merchantId || !apiKey) {
+            throw new Error('Cryptomus credentials not configured');
+        }
+
+        callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}${callbackUrl}`;
+        // callbackUrl = `https://3f686b229f55.ngrok-free.app${callbackUrl}`;
+
+        const payload = {
+            order_id: orderId,
+            currency,
+            network,
+            url_callback: callbackUrl,
+            status
+        };
+
+        console.log(payload)
+
+        const signature = generateCryptomusSignature(payload, apiKey);
+
+        const response = await fetch('https://api.cryptomus.com/v1/test-webhook/payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'merchant': merchantId,
+                'sign': signature
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (data.state !== 0) {
+            console.error('Cryptomus test webhook failed:', data);
+            return false;
+        }
+
+        return true;
+    } catch (error) {
+        console.error('Error triggering Cryptomus test webhook:', error);
+        return false;
     }
-
-    callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}${callbackUrl}`;
-    // callbackUrl = `https://3f686b229f55.ngrok-free.app${callbackUrl}`;
-    
-    const payload = {
-      order_id: orderId,
-      currency,
-      network,
-      url_callback: callbackUrl,
-      status
-    };
-
-    console.log(payload)
-
-    const signature = generateCryptomusSignature(payload, apiKey);
-
-    const response = await fetch('https://api.cryptomus.com/v1/test-webhook/payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'merchant': merchantId,
-        'sign': signature
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-    
-    if (data.state !== 0) {
-      console.error('Cryptomus test webhook failed:', data);
-      return false;
-    }
-    
-    return true;
-  } catch (error) {
-    console.error('Error triggering Cryptomus test webhook:', error);
-    return false;
-  }
 }
 
 /**
  * Simulates a successful proxy plan purchase payment by triggering a test webhook
  */
 export const testProxyPlanPurchase = withAuthGuard(async (authUser: AuthUser, {
-  proxyType,
-  tier,
-  cryptoNetwork = "TRX",
-  cryptoCurrency = "USDT"
+    proxyType,
+    tier,
+    cryptoNetwork = "TRX",
+    cryptoCurrency = "USDT"
 }: {
-  proxyType: keyof typeof PROXY_PLANS
-  tier: "basic" | "pro" | "enterprise"
-  cryptoNetwork?: string
-  cryptoCurrency?: string
+    proxyType: keyof typeof PROXY_PLANS
+    tier: "basic" | "pro" | "enterprise"
+    cryptoNetwork?: string
+    cryptoCurrency?: string
 }): Promise<TestWebhookResponse> => {
-  try {
-    // Get plan details
-    const plan = PROXY_PLANS[proxyType][tier]
-    if (!plan) {
-      return {
-        success: false,
-        error: "Invalid plan selection"
-      }
+    try {
+        // Get plan details
+        const plan = PROXY_PLANS[proxyType][tier]
+        if (!plan) {
+            return {
+                success: false,
+                error: "Invalid plan selection"
+            }
+        }
+
+        // Generate order ID for tracking
+        const orderId = generateOrderId()
+
+        // Create a payment record first
+        await createPayment({
+            orderId,
+            userId: authUser.uid,
+            provider: "cryptomus",
+            amount: plan.price / 100, // Convert cents to dollars
+            currency: "USD",
+            type: "proxy_purchase",
+            metadata: {
+                proxyType,
+                tier,
+                planName: plan.name,
+                bandwidth: plan.bandwidth,
+                isRecurring: false,
+                cryptomusPaymentId: `test_${orderId}`,
+                cryptomusReference: `test_ref_${orderId}`,
+                cryptoNetwork,
+                cryptoCurrency
+            }
+        })
+
+        // Trigger the test webhook
+        const webhookSuccess = await triggerCryptomusTestWebhook(
+            orderId,
+            'paid',
+            cryptoCurrency,
+            cryptoNetwork
+        )
+
+        if (!webhookSuccess) {
+            return {
+                success: false,
+                error: "Failed to trigger Cryptomus test webhook"
+            }
+        }
+
+        return {
+            success: true,
+            message: "Test proxy plan purchase webhook sent successfully",
+            orderId
+        }
+    } catch (error) {
+        console.error("Test proxy plan purchase error:", error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown test webhook error"
+        }
     }
-
-    // Generate order ID for tracking
-    const orderId = generateOrderId()
-
-    // Create a payment record first
-    await createPayment({
-      orderId,
-      userId: authUser.uid,
-      provider: "cryptomus",
-      amount: plan.price / 100, // Convert cents to dollars
-      currency: "USD",
-      type: "proxy_purchase",
-      metadata: {
-        proxyType,
-        tier,
-        planName: plan.name,
-        bandwidth: plan.bandwidth,
-        isRecurring: false,
-        cryptomusPaymentId: `test_${orderId}`,
-        cryptomusReference: `test_ref_${orderId}`,
-        cryptoNetwork,
-        cryptoCurrency
-      }
-    })
-
-    // Trigger the test webhook
-    const webhookSuccess = await triggerCryptomusTestWebhook(
-      orderId,
-      'paid',
-      cryptoCurrency,
-      cryptoNetwork
-    )
-
-    if (!webhookSuccess) {
-      return {
-        success: false,
-        error: "Failed to trigger Cryptomus test webhook"
-      }
-    }
-
-    return {
-      success: true,
-      message: "Test proxy plan purchase webhook sent successfully",
-      orderId
-    }
-  } catch (error) {
-    console.error("Test proxy plan purchase error:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown test webhook error"
-    }
-  }
 })
 
 
@@ -688,69 +694,69 @@ export const testProxyPlanPurchase = withAuthGuard(async (authUser: AuthUser, {
  * Simulates a successful wallet deposit payment by triggering a test webhook
  */
 export const testWalletDeposit = withAuthGuard(async (authUser: AuthUser, {
-  amount,
-  cryptoNetwork = "TRX",
-  cryptoCurrency = "USDT"
+    amount,
+    cryptoNetwork = "TRX",
+    cryptoCurrency = "USDT"
 }: {
-  amount: number // Amount in dollars
-  cryptoNetwork?: string
-  cryptoCurrency?: string
+    amount: number // Amount in dollars
+    cryptoNetwork?: string
+    cryptoCurrency?: string
 }): Promise<TestWebhookResponse> => {
-  try {
-    // Validate amount
-    if (!amount || amount <= 0) {
-      return {
-        success: false,
-        error: "Invalid deposit amount"
-      };
+    try {
+        // Validate amount
+        if (!amount || amount <= 0) {
+            return {
+                success: false,
+                error: "Invalid deposit amount"
+            };
+        }
+
+        // Generate order ID for tracking
+        const orderId = generateOrderId();
+
+        // Create a payment record first
+        await createPayment({
+            orderId,
+            userId: authUser.uid,
+            provider: "cryptomus",
+            amount,
+            currency: "USD",
+            type: "wallet_deposit",
+            metadata: {
+                description: `Wallet Deposit - $${amount}`,
+                cryptomusPaymentId: `test_${orderId}`,
+                cryptomusReference: `test_ref_${orderId}`,
+                cryptoNetwork,
+                cryptoCurrency
+            }
+        });
+
+        // Trigger the test webhook
+        const webhookSuccess = await triggerCryptomusTestWebhook(
+            orderId,
+            'paid',
+            cryptoCurrency,
+            cryptoNetwork,
+            "/api/payments/callback/wallet"
+        );
+
+        if (!webhookSuccess) {
+            return {
+                success: false,
+                error: "Failed to trigger Cryptomus test webhook"
+            };
+        }
+
+        return {
+            success: true,
+            message: "Test wallet deposit webhook sent successfully",
+            orderId
+        };
+    } catch (error) {
+        console.error("Test wallet deposit error:", error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown test webhook error"
+        };
     }
-
-    // Generate order ID for tracking
-    const orderId = generateOrderId();
-
-    // Create a payment record first
-    await createPayment({
-      orderId,
-      userId: authUser.uid,
-      provider: "cryptomus",
-      amount,
-      currency: "USD",
-      type: "wallet_deposit",
-      metadata: {
-        description: `Wallet Deposit - $${amount}`,
-        cryptomusPaymentId: `test_${orderId}`,
-        cryptomusReference: `test_ref_${orderId}`,
-        cryptoNetwork,
-        cryptoCurrency
-      }
-    });
-
-    // Trigger the test webhook
-    const webhookSuccess = await triggerCryptomusTestWebhook(
-      orderId,
-      'paid',
-      cryptoCurrency,
-      cryptoNetwork,
-      "/api/payments/callback/wallet"
-    );
-
-    if (!webhookSuccess) {
-      return {
-        success: false,
-        error: "Failed to trigger Cryptomus test webhook"
-      };
-    }
-
-    return {
-      success: true,
-      message: "Test wallet deposit webhook sent successfully",
-      orderId
-    };
-  } catch (error) {
-    console.error("Test wallet deposit error:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unknown test webhook error"
-    };
-  }
 });

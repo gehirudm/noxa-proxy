@@ -111,7 +111,7 @@ export function TransactionHistory({ initialFilters = {} }: TransactionHistoryPr
                     type: data.type,
                     amount: data.amount,
                     currency: data.currency || 'USD',
-                    status: data.metadata.rawData.status,
+                    status: data.metadata?.rawData?.status || 'N/A',
                     createdAt: data.createdAt?.toDate() || new Date(),
                     paymentProvider: data.paymentProvider,
                     description: data.description,
