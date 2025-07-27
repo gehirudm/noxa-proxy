@@ -9,6 +9,7 @@ import { ProxyOrders } from "../components/proxy-orders"
 import { ProxyPlans } from "../components/proxy-plans"
 import { ProxyUrlGenerator } from "../components/proxy-url-generator"
 import { ProxyUsage } from "../components/proxy-usage"
+import { PROXY_PLANS } from "@/lib/proxy-plans"
 
 export default function StaticResidentialPage() {
   // Use nuqs for tab state management
@@ -27,6 +28,50 @@ export default function StaticResidentialPage() {
     { id: "generator", label: "Generator" },
     { id: "plans", label: "Plans" },
   ]
+
+  // Define the benefits for residential proxies
+  const residentialBenefits = [
+    {
+      name: "Bandwidth",
+      values: {
+        basic: "100 GB",
+        pro: "500 GB",
+        enterprise: "1 TB"
+      }
+    },
+    {
+      name: "Concurrent Connections",
+      values: {
+        basic: "10",
+        pro: "50",
+        enterprise: "Unlimited"
+      }
+    },
+    {
+      name: "IP Rotation",
+      values: {
+        basic: true,
+        pro: true,
+        enterprise: true
+      }
+    },
+    {
+      name: "Dedicated IPs",
+      values: {
+        basic: false,
+        pro: true,
+        enterprise: true
+      }
+    },
+    {
+      name: "24/7 Support",
+      values: {
+        basic: false,
+        pro: true,
+        enterprise: true
+      }
+    }
+  ];
 
   return (
     <main className="p-6">
@@ -77,7 +122,11 @@ export default function StaticResidentialPage() {
 
       {activeTab === "plans" && (
         <div>
-          <ProxyPlans proxyType="residential" />
+          <ProxyPlans 
+            proxyType="residential"
+            plans={PROXY_PLANS.residential}
+            benefits={residentialBenefits}
+          />
         </div>
       )}
     </main>
