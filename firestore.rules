@@ -18,10 +18,19 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow write: if isOwner(userId) || isAdmin();
+      
+      match /payments/{paymentId} {
+        allow read, write: if isAdmin(); // or add owner check too if needed
+      }
     }
 
+    // match /{collection}/{document=**} {
+    //   allow read, write: if isAdmin();
+    // }
+    
     match /{collection}/{document=**} {
       allow read, write: if isAdmin();
     }
+
   }
 }
