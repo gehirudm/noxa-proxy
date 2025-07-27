@@ -1,111 +1,116 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Check, X } from "lucide-react";
-import { PROXY_PLANS, ProxyPlan } from "@/lib/proxy-plans";
-import { handleProxyPlanPurchase, PaymentProvider } from "@/app/actions/payment-actions";
-import { useToast } from "@/components/ui/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-interface ProxyPlansProps {
-    proxyType: keyof typeof PROXY_PLANS;
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Check, Loader2, X } from "lucide-react"
+import { handleProxyPlanPurchase, handleWalletProxyPurchase } from "@/app/actions/payment-actions"
+import { useToast } from "@/components/ui/use-toast"
+
+// Define types
+type PaymentProvider = "cryptomus" | "wallet"
+type ProxyTier = "basic" | "pro" | "enterprise"
+
+interface ProxyPlan {
+    name: string
+    price: number
+    bandwidth: string
+    isRecurring: boolean
 }
 
-export function ProxyPlans({ proxyType }: ProxyPlansProps) {
-    const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState(false);
-    const [selectedPlan, setSelectedPlan] = useState<{
-        tier: "basic" | "pro" | "enterprise";
-        plan: ProxyPlan;
-    } | null>(null);
-    const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-    const [paymentProvider, setPaymentProvider] = useState<PaymentProvider>("stripe");
-    const [cryptoNetwork, setCryptoNetwork] = useState("ETH");
+interface ProxyPlansProps {
+    proxyType: string
+    plans: Record<string, ProxyPlan>
+    benefits: Array<{
+        name: string
+        values: Record<string, boolean | string | number>
+    }>
+}
 
-    const plans = PROXY_PLANS[proxyType];
-    
-    // Format price from cents to dollars
+export function ProxyPlans({ proxyType, plans, benefits }: ProxyPlansProps) {
+    const { toast } = useToast()
+    const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+    const [selectedPlan, setSelectedPlan] = useState<{ tier: ProxyTier; plan: ProxyPlan } | null>(null)
+    const [paymentProvider, setPaymentProvider] = useState<PaymentProvider>("cryptomus")
+    const [cryptoNetwork, setCryptoNetwork] = useState("ETH")
+    const [cryptoCurrency, setCryptoCurrency] = useState("USDT")
+    const [isLoading, setIsLoading] = useState(false)
+
     const formatPrice = (price: number) => {
-        return `$${(price / 100).toFixed(2)}`;
-    };
+        return `$${(price / 100).toFixed(2)}`
+    }
 
-    const handleSelectPlan = (tier: "basic" | "pro" | "enterprise", plan: ProxyPlan) => {
-        setSelectedPlan({ tier, plan });
-        setPaymentDialogOpen(true);
-    };
+    const handleSelectPlan = (tier: ProxyTier, plan: ProxyPlan) => {
+        setSelectedPlan({ tier, plan })
+        setPaymentDialogOpen(true)
+    }
 
     const handlePayment = async () => {
-        if (!selectedPlan) return;
-        
-        setIsLoading(true);
-        
+        if (!selectedPlan) return
+
+        setIsLoading(true)
+
         try {
-            const response = await handleProxyPlanPurchase({
-                proxyType,
-                tier: selectedPlan.tier,
-                paymentProvider,
-                cryptoNetwork: paymentProvider === "cryptomus" ? cryptoNetwork : undefined
-            });
-            
-            if (response.success && response.redirectUrl) {
-                // Redirect to payment page
-                window.location.href = response.redirectUrl;
-            } else {
-                toast({
-                    title: "Payment Error",
-                    description: response.error || "Failed to process payment",
-                    variant: "destructive"
-                });
+            if (paymentProvider === "cryptomus") {
+                const response = await handleProxyPlanPurchase({
+                    proxyType: proxyType as any,
+                    tier: selectedPlan.tier,
+                    paymentProvider: "cryptomus",
+                    cryptoNetwork,
+                    cryptoCurrency
+                })
+
+                if (response.success && response.redirectUrl) {
+                    window.location.href = response.redirectUrl
+                } else {
+                    toast({
+                        title: "Payment Error",
+                        description: response.error || "Failed to process payment",
+                        variant: "destructive"
+                    })
+                }
+            } else if (paymentProvider === "wallet") {
+                // Implement wallet-based purchase
+                const response = await handleWalletProxyPurchase({
+                    proxyType: proxyType as any,
+                    tier: selectedPlan.tier
+                })
+
+                if (response.success) {
+                    toast({
+                        title: "Payment Successful",
+                        description: "Your purchase has been processed successfully.",
+                        variant: "default"
+                    })
+                    setPaymentDialogOpen(false)
+                    // You might want to refresh the page or update the UI here
+                } else {
+                    toast({
+                        title: "Payment Error",
+                        description: response.error || "Failed to process payment",
+                        variant: "destructive"
+                    })
+                }
             }
         } catch (error) {
             toast({
                 title: "Payment Error",
                 description: error instanceof Error ? error.message : "An unexpected error occurred",
                 variant: "destructive"
-            });
+            })
         } finally {
-            setIsLoading(false);
+            setIsLoading(false)
         }
-    };
-
-    // Define common benefits for all plans
-    const benefits = [
-        {
-            name: "Bandwidth",
-            values: {
-                basic: plans.basic.bandwidth,
-                pro: plans.pro.bandwidth,
-                enterprise: plans.enterprise.bandwidth
-            }
-        },
-        {
-            name: "Concurrent Sessions",
-            values: { basic: true, pro: true, enterprise: true }
-        },
-        {
-            name: "City-level targeting",
-            values: { basic: true, pro: true, enterprise: true }
-        },
-        {
-            name: "24/7 Support",
-            values: { basic: true, pro: true, enterprise: true }
-        },
-        {
-            name: "Dedicated Account Manager",
-            values: { basic: false, pro: true, enterprise: true }
-        },
-        {
-            name: "Priority Routing",
-            values: { basic: false, pro: false, enterprise: true }
-        }
-    ];
+    }
 
     return (
-        <div>
-            {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="space-y-8">
+            {/* Plans Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {Object.entries(plans).map(([tier, plan]) => (
                     <Card key={tier} className="bg-card border-border">
                         <CardHeader className="text-center">
@@ -118,7 +123,7 @@ export function ProxyPlans({ proxyType }: ProxyPlansProps) {
                             </div>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <Button 
+                            <Button
                                 className="w-full bg-blue-600 hover:bg-blue-700 text-white"
                                 onClick={() => handleSelectPlan(tier as "basic" | "pro" | "enterprise", plan)}
                             >
@@ -187,20 +192,14 @@ export function ProxyPlans({ proxyType }: ProxyPlansProps) {
                             {selectedPlan?.plan.isRecurring ? "/month" : ""}
                         </DialogDescription>
                     </DialogHeader>
-                    
+
                     <div className="space-y-4 py-4">
-                        <Tabs defaultValue="stripe" onValueChange={(value) => setPaymentProvider(value as PaymentProvider)}>
+                        <Tabs defaultValue="cryptomus" onValueChange={(value) => setPaymentProvider(value as PaymentProvider)}>
                             <TabsList className="grid w-full grid-cols-2">
-                                <TabsTrigger value="stripe">Credit Card</TabsTrigger>
                                 <TabsTrigger value="cryptomus">Cryptocurrency</TabsTrigger>
+                                <TabsTrigger value="wallet">Wallet Balance</TabsTrigger>
                             </TabsList>
-                            
-                            <TabsContent value="stripe" className="space-y-4 mt-4">
-                                <p className="text-sm text-muted-foreground">
-                                    You'll be redirected to Stripe to complete your payment securely.
-                                </p>
-                            </TabsContent>
-                            
+
                             <TabsContent value="cryptomus" className="space-y-4 mt-4">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Select Cryptocurrency Network</label>
@@ -209,31 +208,71 @@ export function ProxyPlans({ proxyType }: ProxyPlansProps) {
                                             <SelectValue placeholder="Select network" />
                                         </SelectTrigger>
                                         <SelectContent>
+                                            <SelectItem value="TRX">Tron (TRX)</SelectItem>
                                             <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
                                             <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                                            <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                                            <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
-                                            <SelectItem value="BNB">Binance Coin (BNB)</SelectItem>
+                                            <SelectItem value="BSC">Binance Smart Chain (BSC)</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium">Select Cryptocurrency</label>
+                                    <Select value={cryptoCurrency} onValueChange={setCryptoCurrency}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select currency" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="USDT">Tether (USDT)</SelectItem>
+                                            <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
+                                            <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+                                            <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
                                 <p className="text-sm text-muted-foreground">
-                                    You'll be redirected to complete your payment using cryptocurrency.
+                                    You'll be redirected to Cryptomus to complete your payment securely.
                                 </p>
+                            </TabsContent>
+
+                            <TabsContent value="wallet" className="space-y-4 mt-4">
+                                <p className="text-sm">
+                                    Pay using your account wallet balance. Make sure you have sufficient funds.
+                                </p>
+
+                                <div className="bg-blue-950/50 p-4 rounded-md">
+                                    <div className="flex justify-between mb-2">
+                                        <span>Required amount:</span>
+                                        <span className="font-medium">{formatPrice(selectedPlan?.plan.price || 0)}</span>
+                                    </div>
+                                    {/* You could add wallet balance check here */}
+                                    {/* <div className="flex justify-between">
+                                        <span>Your balance:</span>
+                                        <span className="font-medium">${walletBalance.toFixed(2)}</span>
+                                    </div> */}
+                                </div>
                             </TabsContent>
                         </Tabs>
                     </div>
-                    
+
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setPaymentDialogOpen(false)}>
                             Cancel
                         </Button>
-                        <Button 
-                            onClick={handlePayment} 
+                        <Button
+                            onClick={handlePayment}
                             disabled={isLoading}
                             className="bg-blue-600 hover:bg-blue-700 text-white"
                         >
-                            {isLoading ? "Processing..." : "Proceed to Payment"}
+                            {isLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Processing...
+                                </>
+                            ) : (
+                                paymentProvider === "cryptomus" ? "Pay with Crypto" : "Pay from Wallet"
+                            )}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

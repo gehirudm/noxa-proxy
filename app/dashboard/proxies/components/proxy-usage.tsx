@@ -7,6 +7,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { getUserProxyUsage, getUserSubscriptions } from "@/app/actions/user-actions";
 import { ChevronRight, Link } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { PurchaseTrafficDialog } from "./purchase-traffic-dialog";
 
 interface UsageDataPoint {
   timestamp: string;
@@ -25,6 +26,7 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
   const [totalUsage, setTotalUsage] = useState(0);
   const [availableTraffic, setAvailableTraffic] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [isPurchaseDialogOpen, setIsPurchaseDialogOpen] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -123,6 +125,14 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
     fetchData();
   }, [proxyType, activeTimeRange]);
 
+  // Format bytes to readable format
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return "0.00 GB";
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(1024));
+    return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + " " + sizes[i];
+  };
+
   // Format data for the chart
   const chartData = usageData.map(item => ({
     timestamp: item.timestamp,
@@ -144,18 +154,21 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
 
   const timeLabels = getTimeLabels();
 
-  // Format bytes to readable format
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return "0.00 GB";
-    const sizes = ["B", "KB", "MB", "GB", "TB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + " " + sizes[i];
-  };
-
   // Handle purchase traffic button click
   const handlePurchaseTraffic = () => {
-    // Navigate to the plans tab by adding ?tab=plans to the URL
-    router.push(`${pathname}?tab=plans`);
+    setIsPurchaseDialogOpen(true);
+  };
+
+  // Get a display name for the proxy type
+  const getProxyDisplayName = () => {
+    const displayNames: Record<string, string> = {
+      'residential': 'Residential Proxy',
+      'datacenter': 'Datacenter Proxy',
+      'mobile': 'Mobile Proxy',
+      'static_residential': 'Static Residential Proxy',
+      'premium-residential': 'Premium Residential Proxy'
+    };
+    return displayNames[proxyType] || 'Proxy';
   };
 
   return (
@@ -173,10 +186,10 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-3 bg-muted rounded-lg cursor-pointer hover:bg-muted/80">
+          {/* <div className="flex items-center justify-between p-3 bg-muted rounded-lg cursor-pointer hover:bg-muted/80">
             <span className="text-foreground">Auto Topup</span>
             <ChevronRight className="w-4 h-4 text-muted-foreground" />
-          </div>
+          </div> */}
           <Button 
             className="w-full bg-muted hover:bg-muted/80 text-foreground" 
             variant="secondary"
@@ -184,6 +197,14 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
           >
             Purchase Traffic
           </Button>
+          
+          {/* Purchase Traffic Dialog */}
+          <PurchaseTrafficDialog
+            open={isPurchaseDialogOpen}
+            onOpenChange={setIsPurchaseDialogOpen}
+            proxyType={proxyType}
+            proxyDisplayName={getProxyDisplayName()}
+          />
         </CardContent>
       </Card>
 
@@ -246,7 +267,7 @@ export function ProxyUsage({ proxyType }: ProxyUsageProps) {
                   <XAxis dataKey="timestamp" stroke="#6b7280" />
                   <YAxis stroke="#6b7280" />
                   <Tooltip
-                    contentStyle={{
+                                        contentStyle={{
                       backgroundColor: '#1f2937',
                       borderColor: '#374151',
                       color: '#f9fafb'

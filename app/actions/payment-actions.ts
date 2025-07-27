@@ -6,10 +6,14 @@ import { AuthUser } from "@/lib/auth-utils"
 import { withAuthGuard } from "@/lib/guards/auth-guard"
 import {
     createPayment,
+    createTransactionRecord,
     generateOrderId,
+    markPaymentCompleted,
     updatePaymentWithCryptoDetails} from "@/lib/db/payments"
 import { PaymentType as ProviderPaymentType } from "@/lib/payment/providers/PaymentProvider"
 import crypto from 'crypto'
+import { db } from "@/lib/firebase/firebase-admin"
+import { evomiAPI } from "@/lib/evomi-api"
 
 // Payment provider options
 type PaymentProvider = "stripe" | "cryptomus"
@@ -20,6 +24,7 @@ export interface PaymentResponse {
     redirectUrl?: string
     error?: string
     orderId?: string
+    message?: string
 }
 
 /**
@@ -30,17 +35,21 @@ export const handleProxyPlanPurchase = withAuthGuard(async (authUser: AuthUser, 
     tier,
     paymentProvider = "stripe",
     cryptoNetwork,
+    cryptoCurrency,
     isRecurring = false,
     billingCycle = "monthly",
-    trialPeriodDays
+    trialPeriodDays,
+    customQuantity
 }: {
     proxyType: keyof typeof PROXY_PLANS
-    tier: "basic" | "pro" | "enterprise"
+    tier: "basic" | "pro" | "enterprise" | "custom"
     paymentProvider: PaymentProvider
     cryptoNetwork?: string // Only required for Cryptomus
+    cryptoCurrency?: string // Only required for Cryptomus
     isRecurring?: boolean
     billingCycle?: "monthly" | "yearly"
     trialPeriodDays?: number
+    customQuantity?: number // GB of bandwidth for custom plans
 }): Promise<PaymentResponse> => {
     if (!authUser.email) {
         return {
@@ -52,13 +61,38 @@ export const handleProxyPlanPurchase = withAuthGuard(async (authUser: AuthUser, 
     let userEmail = authUser.email;
     let userId = authUser.uid;
 
-    // Get plan details
-    const plan = PROXY_PLANS[proxyType][tier]
-    if (!plan) {
-        return {
-            success: false,
-            error: "Invalid plan selection"
+    // Handle custom plan pricing
+    let plan;
+    let planPrice;
+    let planName;
+    let planBandwidth;
+    
+    if (tier === "custom") {
+        // Validate custom quantity
+        if (!customQuantity || customQuantity <= 0) {
+            return {
+                success: false,
+                error: "Invalid bandwidth quantity"
+            }
         }
+        
+        // Calculate price for custom bandwidth (example: $0.50 per GB)
+        const pricePerGB = 2.75; // $0.50 per GB - adjust as needed
+        planPrice = Math.round(customQuantity * pricePerGB * 100); // Convert to cents
+        planName = `Custom ${proxyType.replace(/_/g, ' ')} Plan`;
+        planBandwidth = `${customQuantity} GB`;
+    } else {
+        // Get predefined plan details
+        plan = PROXY_PLANS[proxyType][tier];
+        if (!plan) {
+            return {
+                success: false,
+                error: "Invalid plan selection"
+            }
+        }
+        planPrice = plan.price;
+        planName = plan.name;
+        planBandwidth = plan.bandwidth;
     }
 
     // Generate order ID for tracking
@@ -84,11 +118,12 @@ export const handleProxyPlanPurchase = withAuthGuard(async (authUser: AuthUser, 
                 type: ProviderPaymentType.ONE_TIME,
                 orderId,
                 userId: authUser.uid,
-                amount: plan.price / 100,
+                amount: planPrice / 100, // Convert cents to dollars
                 currency: "USD",
-                description: plan.name,
+                description: planName,
                 customerEmail: authUser.email,
-                network: cryptoNetwork
+                network: cryptoNetwork,
+                currency_to: cryptoCurrency
             };
 
             // Create the one-time payment
@@ -112,18 +147,20 @@ export const handleProxyPlanPurchase = withAuthGuard(async (authUser: AuthUser, 
                 orderId,
                 userId: authUser.uid,
                 provider: paymentProvider,
-                amount: plan.price / 100, // Convert cents to dollars
+                amount: planPrice / 100, // Convert cents to dollars
                 type: "proxy_purchase",
                 metadata: {
                     proxyType,
                     tier,
-                    planName: plan.name,
-                    bandwidth: plan.bandwidth,
-                    isRecurring: isRecurring || plan.isRecurring,
+                    planName,
+                    bandwidth: planBandwidth,
+                    isRecurring: isRecurring || (plan?.isRecurring || false),
                     billingCycle: isRecurring ? billingCycle : undefined,
                     cryptomusPaymentId: paymentResponse.paymentId,
                     cryptomusReference: paymentResponse.providerReference,
-                    cryptoNetwork
+                    cryptoNetwork,
+                    cryptoCurrency,
+                    customQuantity: tier === "custom" ? customQuantity : undefined
                 }
             });
 
@@ -149,6 +186,223 @@ export const handleProxyPlanPurchase = withAuthGuard(async (authUser: AuthUser, 
     } catch (error) {
         console.error("Payment processing error:", error);
 
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Unknown payment processing error"
+        };
+    }
+});
+
+
+/**
+ * Handles proxy plan purchase using the user's wallet balance
+ */
+export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser, {
+    proxyType,
+    tier,
+    customQuantity
+}: {
+    proxyType: keyof typeof PROXY_PLANS
+    tier: "basic" | "pro" | "enterprise" | "custom"
+    customQuantity?: number // GB of bandwidth for custom plans
+}): Promise<PaymentResponse> => {
+    if (!authUser.email) {
+        return {
+            success: false,
+            error: "Failed to retrieve user information"
+        }
+    }
+
+    // Handle custom plan pricing
+    let plan;
+    let planPrice;
+    let planName;
+    let planBandwidth;
+    
+    if (tier === "custom") {
+        // Validate custom quantity
+        if (!customQuantity || customQuantity <= 0) {
+            return {
+                success: false,
+                error: "Invalid bandwidth quantity"
+            }
+        }
+        
+        // Calculate price for custom bandwidth (example: $0.50 per GB)
+        const pricePerGB = 2.75; // $0.50 per GB - adjust as needed
+        planPrice = Math.round(customQuantity * pricePerGB * 100); // Convert to cents
+        planName = `Custom ${proxyType.replace(/_/g, ' ')} Plan`;
+        planBandwidth = `${customQuantity} GB`;
+    } else {
+        // Get predefined plan details
+        plan = PROXY_PLANS[proxyType][tier];
+        if (!plan) {
+            return {
+                success: false,
+                error: "Invalid plan selection"
+            }
+        }
+        planPrice = plan.price;
+        planName = plan.name;
+        planBandwidth = plan.bandwidth;
+    }
+
+    // Generate order ID for tracking
+    const orderId = generateOrderId();
+
+    try {
+        // Get user's wallet balance
+        const userDoc = await db.collection('users').doc(authUser.uid).get();
+        const userData = userDoc.data();
+        
+        if (!userData) {
+            return {
+                success: false,
+                error: "User data not found"
+            };
+        }
+        
+        const walletBalance = userData.wallet?.balance || 0;
+        const amountInDollars = planPrice / 100; // Convert cents to dollars
+        
+        // Check if user has sufficient balance
+        if (walletBalance < amountInDollars) {
+            return {
+                success: false,
+                error: `Insufficient wallet balance. Required: $${amountInDollars.toFixed(2)}, Available: $${walletBalance.toFixed(2)}`
+            };
+        }
+        
+        // Create payment record
+        await createPayment({
+            orderId,
+            userId: authUser.uid,
+            provider: "wallet",
+            amount: amountInDollars,
+            type: "proxy_purchase",
+            status: "pending", // Will be updated to completed after processing
+            metadata: {
+                proxyType,
+                tier,
+                planName,
+                bandwidth: planBandwidth,
+                isRecurring: false, // Wallet payments are always one-time
+                customQuantity: tier === "custom" ? customQuantity : undefined
+            }
+        });
+        
+        // Deduct amount from wallet balance
+        const newBalance = walletBalance - amountInDollars;
+        await db.collection('users').doc(authUser.uid).update({
+            'wallet.balance': newBalance,
+            'wallet.updatedAt': new Date()
+        });
+        
+        // Create transaction record
+        await createTransactionRecord({
+            userId: authUser.uid,
+            type: 'purchase',
+            amount: amountInDollars,
+            currency: 'USD',
+            paymentId: orderId,
+            paymentProvider: 'wallet',
+            description: `Wallet payment for ${planName}`
+        });
+        
+        // Mark payment as completed
+        await markPaymentCompleted(authUser.uid, orderId);
+        
+        // Provision the proxy
+        // Get the user document to retrieve the Evomi username
+        if (!userData.evomi?.username) {
+            console.error(`No Evomi username found for user ${authUser.uid}`);
+            throw new Error('User does not have an Evomi account configured');
+        }
+        
+        const evomiUsername = userData.evomi.username;
+        
+        // Map our proxy types to Evomi product types
+        const proxyTypeToEvomiProduct: Record<string, 'residential' | 'sharedDataCenter' | 'mobile'> = {
+            'premium_residential': 'residential',
+            'static_residential': 'residential',
+            'datacenter_ipv4': 'sharedDataCenter',
+            'datacenter_ipv6': 'sharedDataCenter',
+            'mobile_proxy': 'mobile'
+        };
+        
+        const evomiProduct = proxyTypeToEvomiProduct[proxyType];
+        
+        if (!evomiProduct) {
+            console.error(`Invalid proxy type: ${proxyType}`);
+            throw new Error(`Invalid proxy type: ${proxyType}`);
+        }
+        
+        // Parse bandwidth from string (e.g., "5 GB") to MB amount
+        let mbAmount = 0;
+        const bandwidthMatch = planBandwidth.match(/(\d+)\s*GB/i);
+        if (bandwidthMatch && bandwidthMatch[1]) {
+            // Convert GB to MB (1 GB = 1024 MB)
+            mbAmount = parseInt(bandwidthMatch[1], 10) * 1024;
+        } else {
+            console.error(`Invalid bandwidth format: ${planBandwidth}`);
+            throw new Error(`Invalid bandwidth format: ${planBandwidth}`);
+        }
+        
+        try {
+            // Add the bandwidth to the user's Evomi account
+            const updatedSubUser = await evomiAPI.giveBalance(
+                evomiUsername,
+                evomiProduct,
+                mbAmount
+            );
+            
+            console.log(`Successfully added ${mbAmount}MB to ${evomiUsername}'s ${evomiProduct} balance`);
+            
+            // Update the user's proxy plan information in Firestore
+            await db.collection('users').doc(authUser.uid).update({
+                [`proxyPlans.${proxyType}`]: {
+                    tier,
+                    purchasedAt: new Date(),
+                    expiresAt: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)), // 30 days for one-time purchases
+                    isActive: true,
+                    bandwidth: planBandwidth,
+                    planName,
+                    evomiBalance: updatedSubUser.products[evomiProduct]?.balance || mbAmount
+                },
+                updatedAt: new Date()
+            });
+            
+            return {
+                success: true,
+                message: "Payment successful and proxy provisioned",
+                orderId
+            };
+        } catch (error) {
+            console.error(`Failed to add balance to Evomi account: ${error}`);
+            
+            // Still update the user's plan in Firestore, but mark that provisioning failed
+            await db.collection('users').doc(authUser.uid).update({
+                [`proxyPlans.${proxyType}`]: {
+                    tier,
+                    purchasedAt: new Date(),
+                    expiresAt: new Date(Date.now() + (30 * 24 * 60 * 60 * 1000)),
+                    isActive: true,
+                    bandwidth: planBandwidth,
+                    planName,
+                    provisioningError: error instanceof Error ? error.message : 'Unknown error'
+                },
+                updatedAt: new Date()
+            });
+            
+            return {
+                success: false,
+                error: `Payment successful but failed to provision proxy: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                orderId
+            };
+        }
+    } catch (error) {
+        console.error("Wallet payment processing error:", error);
+        
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown payment processing error"

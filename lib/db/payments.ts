@@ -42,6 +42,7 @@ export async function createPayment({
   amount,
   currency = 'USD',
   type,
+  status,
   metadata = {},
 }: {
   orderId: string;
@@ -50,6 +51,7 @@ export async function createPayment({
   amount: number;
   currency?: string;
   type: PaymentType;
+  status?: string;
   metadata?: Record<string, any>;
 }): Promise<void> {
   const paymentRef = db.collection('users').doc(userId).collection('payments').doc(orderId);
@@ -59,7 +61,7 @@ export async function createPayment({
     userId,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
-    status: 'pending' as PaymentStatus,
+    status: status || 'pending' as PaymentStatus,
     provider,
     amount,
     currency,
