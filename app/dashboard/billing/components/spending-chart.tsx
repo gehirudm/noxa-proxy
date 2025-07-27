@@ -67,7 +67,7 @@ export function SpendingChart({ initialTimeRange = "1D" }: SpendingChartProps) {
       const transactionsQuery = query(
         collection(db, "users", user.uid, "transactions"),
         where("type", "==", "purchase"),
-        where("status", "==", "completed"),
+        where("metadata.rawData.status", "==", "paid"),
         where("createdAt", ">=", Timestamp.fromDate(startDate)),
         where("createdAt", "<=", Timestamp.fromDate(now)),
         orderBy("createdAt", "asc")
@@ -81,6 +81,7 @@ export function SpendingChart({ initialTimeRange = "1D" }: SpendingChartProps) {
       
       querySnapshot.forEach(doc => {
         const transaction = doc.data()
+        console.log("Transaction Data:", transaction)
         const date = transaction.createdAt.toDate()
         const dateKey = date.toISOString().split('T')[0] // YYYY-MM-DD format
         

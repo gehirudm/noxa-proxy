@@ -26,8 +26,8 @@ export default function TestWebhookPage() {
     const [depositAmount, setDepositAmount] = useState("10");
 
     // Common state
-    const [cryptoNetwork, setCryptoNetwork] = useState("TRX");
-    const [cryptoCurrency, setCryptoCurrency] = useState("USDT");
+    const [cryptoNetwork, setCryptoNetwork] = useState("ETH");
+    const [cryptoCurrency, setCryptoCurrency] = useState("ETH");
     const [result, setResult] = useState<string | null>(null);
 
     const handleTestProxyWebhook = async () => {
@@ -147,9 +147,9 @@ export default function TestWebhookPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="residential">Residential</SelectItem>
-                                        <SelectItem value="datacenter">Datacenter</SelectItem>
+                                        {/* <SelectItem value="datacenter">Datacenter</SelectItem>
                                         <SelectItem value="mobile">Mobile</SelectItem>
-                                        <SelectItem value="static_residential">Static Residential</SelectItem>
+                                        <SelectItem value="static_residential">Static Residential</SelectItem> */}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -175,10 +175,10 @@ export default function TestWebhookPage() {
                                         <SelectValue placeholder="Select network" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="TRX">Tron (TRX)</SelectItem>
+                                        {/* <SelectItem value="TRX">Tron (TRX)</SelectItem> */}
                                         <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
                                         <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                                        <SelectItem value="BSC">Binance Smart Chain (BSC)</SelectItem>
+                                        {/* <SelectItem value="BSC">Binance Smart Chain (BSC)</SelectItem> */}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -190,8 +190,8 @@ export default function TestWebhookPage() {
                                         <SelectValue placeholder="Select currency" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                                        <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
+                                        {/* <SelectItem value="USDT">Tether (USDT)</SelectItem> */}
+                                        {/* <SelectItem value="USDC">USD Coin (USDC)</SelectItem> */}
                                         <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
                                         <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
                                     </SelectContent>
