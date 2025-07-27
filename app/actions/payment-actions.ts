@@ -262,7 +262,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
             };
         }
         
-        const walletBalance = userData.wallet?.balance || 0;
+        const walletBalance = userData.walletBalance || 0;
         const amountInDollars = planPrice / 100; // Convert cents to dollars
         
         // Check if user has sufficient balance
@@ -294,7 +294,7 @@ export const handleWalletProxyPurchase = withAuthGuard(async (authUser: AuthUser
         // Deduct amount from wallet balance
         const newBalance = walletBalance - amountInDollars;
         await db.collection('users').doc(authUser.uid).update({
-            'wallet.balance': newBalance,
+            'walletBalance': newBalance,
             'wallet.updatedAt': new Date()
         });
         

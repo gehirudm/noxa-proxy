@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { handleProxyPlanPurchase } from "@/app/actions/payment-actions"
+import { handleProxyPlanPurchase, handleWalletProxyPurchase } from "@/app/actions/payment-actions"
 import { useToast } from "@/components/ui/use-toast"
 import { Loader2, X } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -84,19 +84,28 @@ export function PurchaseTrafficDialog({
                     })
                 }
             } else if (paymentProvider === "wallet") {
-                // Here you would implement wallet-based purchase
-                // This is a placeholder for the wallet payment implementation
-                toast({
-                    title: "Wallet Payment",
-                    description: "Wallet payment functionality will be implemented soon.",
-                    variant: "default"
+                // Implement wallet-based purchase similar to ProxyPlans component
+                const response = await handleWalletProxyPurchase({
+                    proxyType: proxyType as any,
+                    tier: "custom",
+                    customQuantity: parseFloat(quantity)
                 })
-                // Once implemented, you would call a server action like:
-                // const response = await handleWalletProxyPurchase({
-                //   proxyType: proxyType as any,
-                //   tier: "custom",
-                //   customQuantity: parseFloat(quantity)
-                // })
+
+                if (response.success) {
+                    toast({
+                        title: "Payment Successful",
+                        description: "Your purchase has been processed successfully.",
+                        variant: "default"
+                    })
+                    onOpenChange(false) // Close the dialog on success
+                    // You might want to refresh the page or update the UI here
+                } else {
+                    toast({
+                        title: "Payment Error",
+                        description: response.error || "Failed to process payment",
+                        variant: "destructive"
+                    })
+                }
             }
         } catch (error) {
             toast({
