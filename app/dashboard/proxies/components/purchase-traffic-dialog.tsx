@@ -31,7 +31,6 @@ export function PurchaseTrafficDialog({
     const [quantity, setQuantity] = useState("")
     const [paymentProvider, setPaymentProvider] = useState<PaymentProvider>("cryptomus")
     const [cryptoNetwork, setCryptoNetwork] = useState("TRX")
-    const [cryptoCurrency, setCryptoCurrency] = useState("USDT")
 
     // Calculate estimated price (this is just an example, replace with actual pricing logic)
     const pricePerGB = 2.75 // $2.75 per GB
@@ -68,8 +67,6 @@ export function PurchaseTrafficDialog({
                     proxyType: proxyType as any,
                     tier: "custom",
                     paymentProvider: "cryptomus",
-                    cryptoNetwork,
-                    cryptoCurrency,
                     customQuantity: parseFloat(quantity)
                 })
 
@@ -218,29 +215,13 @@ export function PurchaseTrafficDialog({
 
                             <TabsContent value="cryptomus" className="space-y-4 mt-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Select Cryptocurrency Network</label>
+                                    <label className="text-sm font-medium">Select Cryptocurrency</label>
                                     <Select value={cryptoNetwork} onValueChange={setCryptoNetwork}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select network" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="TRX">Tron (TRX)</SelectItem>
-                                            <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-                                            <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                                            <SelectItem value="BSC">Binance Smart Chain (BSC)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Select Cryptocurrency</label>
-                                    <Select value={cryptoCurrency} onValueChange={setCryptoCurrency}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select currency" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                                            <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
                                             <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
                                             <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
                                         </SelectContent>
@@ -292,7 +273,7 @@ export function PurchaseTrafficDialog({
                                 {paymentProvider === "cryptomus" && (
                                     <div className="flex justify-between mb-2">
                                         <span>Crypto:</span>
-                                        <span>{cryptoCurrency} on {cryptoNetwork}</span>
+                                        <span>{cryptoNetwork}</span>
                                     </div>
                                 )}
                                 <div className="border-t border-blue-800 mt-2 pt-2 flex justify-between font-bold">

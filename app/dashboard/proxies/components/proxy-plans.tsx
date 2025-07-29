@@ -37,7 +37,6 @@ export function ProxyPlans({ proxyType, plans, benefits }: ProxyPlansProps) {
     const [selectedPlan, setSelectedPlan] = useState<{ tier: ProxyTier; plan: ProxyPlan } | null>(null)
     const [paymentProvider, setPaymentProvider] = useState<PaymentProvider>("cryptomus")
     const [cryptoNetwork, setCryptoNetwork] = useState("ETH")
-    const [cryptoCurrency, setCryptoCurrency] = useState("USDT")
     const [isLoading, setIsLoading] = useState(false)
 
     const formatPrice = (price: number) => {
@@ -60,8 +59,7 @@ export function ProxyPlans({ proxyType, plans, benefits }: ProxyPlansProps) {
                     proxyType: proxyType as any,
                     tier: selectedPlan.tier,
                     paymentProvider: "cryptomus",
-                    cryptoNetwork,
-                    cryptoCurrency
+                    cryptoNetwork
                 })
 
                 if (response.success && response.redirectUrl) {
@@ -202,29 +200,13 @@ export function ProxyPlans({ proxyType, plans, benefits }: ProxyPlansProps) {
 
                             <TabsContent value="cryptomus" className="space-y-4 mt-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">Select Cryptocurrency Network</label>
+                                    <label className="text-sm font-medium">Select Cryptocurrency</label>
                                     <Select value={cryptoNetwork} onValueChange={setCryptoNetwork}>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select network" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="TRX">Tron (TRX)</SelectItem>
-                                            <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-                                            <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                                            <SelectItem value="BSC">Binance Smart Chain (BSC)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Select Cryptocurrency</label>
-                                    <Select value={cryptoCurrency} onValueChange={setCryptoCurrency}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select currency" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                                            <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
                                             <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
                                             <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
                                         </SelectContent>
